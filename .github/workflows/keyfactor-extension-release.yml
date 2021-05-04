@@ -88,7 +88,7 @@ jobs:
             $assemblyFilePaths = (Get-ChildItem -Include AssemblyInfo.cs -File -Recurse).fullname                        
             foreach ($assemblyFilePath in $assemblyFilePaths) 
             {            
-              $filecontent = Get-Content($assemlyFilePath)
+              $filecontent = Get-Content($assemblyFilePath)
               $newVer = "${{ steps.create_release.outputs.current_tag }}".TrimStart('v')
               attrib $assemblyFilePath -r
               $filecontent -replace $VersionRegex, $newVer | Out-File $assemblyFilePath
