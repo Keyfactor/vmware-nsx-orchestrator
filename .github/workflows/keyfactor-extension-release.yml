@@ -90,7 +90,7 @@ jobs:
             {            
               $filecontent = Get-Content($assemlyFilePath)
               $newVer = "${{ steps.create_release.outputs.current_tag }}".TrimStart('v')
-              attrib $assemlyFilePath -r
+              attrib $assemblyFilePath -r
               $filecontent -replace $VersionRegex, $newVer | Out-File $assemblyFilePath
             }
       
