@@ -3,7 +3,7 @@
 name: Keyfactor Extension - Release
 
 env:
-  project_folder: AviVantageAnyAgent
+  project_folder: AviVantageAnyAgent/AnyAgent
 
 
 # Controls when the action will run. 
