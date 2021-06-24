@@ -10,6 +10,9 @@
 The AVI certificate store type is set up so that each Cert Store points to a specific Avi Vantage instance and certificate type.
 For multiple certificate types on the same Avi Vantage instance, create a certificate store for each type to manage.
 
+Application and System certs are used by Avi for SSL offloading and require private keys. CA certs are used to
+build and validate certificate chains and do not require private keys.
+
 # Setting up AVI Cert Store Type
 Short Name: `AVI`
 Needs Server: `true`
