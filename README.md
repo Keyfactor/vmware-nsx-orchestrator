@@ -1,7 +1,7 @@
 ﻿# Avi Vantage
 ## Orchestrator
 
-The Avi Vantage Orchestrator allows for the management of Certificates stored in the Avi Vantage ADC solution. Application, System, and CA cert types are supported.
+The Avi Vantage Orchestrator allows for the management of certificates stored in the Avi Vantage ADC solution. Application, System, and CA cert types are supported. Inventory, Management, and Renewal functions are supported.
 
 <!-- add integration specific information below -->
 *** 
