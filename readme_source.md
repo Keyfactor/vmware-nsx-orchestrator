@@ -1,10 +1,4 @@
-﻿# {{ name }}
-## {{ integration_type | capitalize }}
-
-{{ description }}
-
-<!-- add integration specific information below -->
-*** 
+﻿*** 
 
 # Introduction 
 The AVI certificate store type is set up so that each Cert Store points to a specific Avi Vantage instance and certificate type.
