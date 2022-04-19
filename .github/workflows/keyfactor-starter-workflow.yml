@@ -7,7 +7,7 @@ jobs:
 
   call-dotnet-build-and-release-workflow:
     needs: [call-create-github-release-workflow]
-    uses: Keyfactor/actions/.github/workflows/dotnet-build-and-release.yml@main
+    uses: Keyfactor/actions/.github/workflows/dotnet-build-and-release.yml@secret-testing
     with:
       release_version: ${{ needs.call-create-github-release-workflow.outputs.release_version }}
       release_url: ${{ needs.call-create-github-release-workflow.outputs.release_url }}
