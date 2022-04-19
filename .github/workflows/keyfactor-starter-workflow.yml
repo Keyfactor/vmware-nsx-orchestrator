@@ -12,6 +12,8 @@ jobs:
       release_version: ${{ needs.call-create-github-release-workflow.outputs.release_version }}
       release_url: ${{ needs.call-create-github-release-workflow.outputs.release_url }}
       release_dir: avi-vantage-orchestrator/AviVantageAnyAgent/AnyAgent/bin/Release # TODO: set build output directory to upload as a release, relative to checkout workspace
+    secrets: 
+      token: ${{ secrets.TEST_PRIVATEACCESS  }}
 
   call-generate-readme-workflow:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
