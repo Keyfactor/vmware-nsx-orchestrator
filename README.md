@@ -14,8 +14,7 @@ Note that in Keyfactor Version 9, the Windows Orchestrator have been replaced by
 
 ---
 
-﻿*** 
-
+﻿
 # Introduction 
 The AVI certificate store type is set up so that each Cert Store points to a specific Avi Vantage instance and certificate type.
 For multiple certificate types on the same Avi Vantage instance, create a certificate store for each type to manage.
@@ -49,3 +48,4 @@ Job Types: `Add, Remove`
 
 ### License
 [Apache](https://apache.org/licenses/LICENSE-2.0)
+
