@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Keyfactor
+﻿// Copyright 2023 Keyfactor
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Keyfactor.AnyAgent.AviVantage.Models;
+using Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models;
 using Keyfactor.Platform.Extensions.Agents;
 using Keyfactor.Platform.Extensions.Agents.Delegates;
 using Keyfactor.Platform.Extensions.Agents.Enums;
@@ -20,10 +20,10 @@ using Keyfactor.Platform.Extensions.Agents.Interfaces;
 using System;
 using System.Collections.Generic;
 
-namespace Keyfactor.AnyAgent.AviVantage.Jobs
+namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 {
     [Job(Constants.JobTypes.INVENTORY)]
-    public class Inventory : AviVantageJob, IAgentJobExtension
+    public class Inventory : NsxJob, IAgentJobExtension
     {
         public override AnyJobCompleteInfo processJob(AnyJobConfigInfo config, SubmitInventoryUpdate submitInventory, SubmitEnrollmentRequest submitEnrollmentRequest, SubmitDiscoveryResults sdr)
         {

@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Keyfactor
+﻿// Copyright 2023 Keyfactor
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Keyfactor.AnyAgent.AviVantage.Models;
+using Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -24,9 +24,9 @@ using System.Net.Security;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Keyfactor.AnyAgent.AviVantage
+namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 {
-    public class AviVantageClient
+    public class NsxClient
     {
         private HttpClient _httpClient { get; }
 
@@ -36,7 +36,7 @@ namespace Keyfactor.AnyAgent.AviVantage
             NullValueHandling = NullValueHandling.Ignore
         };
 
-        public AviVantageClient(string url, string username, string password)
+        public NsxClient(string url, string username, string password)
         {
             _httpClient = new HttpClient();
             string authValue = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));

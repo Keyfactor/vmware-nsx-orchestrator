@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Keyfactor
+﻿// Copyright 2023 Keyfactor
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 using CSS.Common.Logging;
 using CSS.PKI.PrivateKeys;
-using Keyfactor.AnyAgent.AviVantage.Models;
+using Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models;
 using Keyfactor.Platform.Extensions.Agents;
 using Keyfactor.Platform.Extensions.Agents.Delegates;
 using Keyfactor.Platform.Extensions.Agents.Interfaces;
@@ -22,13 +22,13 @@ using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using AviConstants = Keyfactor.AnyAgent.AviVantage.Models.Constants;
+using AviConstants = Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models.Constants;
 
-namespace Keyfactor.AnyAgent.AviVantage
+namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 {
-    public abstract class AviVantageJob : LoggingClientBase, IAgentJobExtension
+    public abstract class NsxJob : LoggingClientBase, IAgentJobExtension
     {
-        private protected AviVantageClient Client { get; set; }
+        private protected NsxClient Client { get; set; }
 
         public string GetJobClass()
         {
