@@ -13,59 +13,60 @@
 // limitations under the License.
 
 using Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models;
-using Keyfactor.Platform.Extensions.Agents;
-using Keyfactor.Platform.Extensions.Agents.Delegates;
-using Keyfactor.Platform.Extensions.Agents.Enums;
-using Keyfactor.Platform.Extensions.Agents.Interfaces;
-using Newtonsoft.Json.Linq;
+using Keyfactor.Logging;
+using Keyfactor.Orchestrators.Common.Enums;
+using Keyfactor.Orchestrators.Extensions;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
 namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 {
-    [Job(Constants.JobTypes.MANAGEMENT)]
-    public class Management : NsxJob, IAgentJobExtension
+    public class Management : NsxJob, IManagementJobExtension
     {
-        public override AnyJobCompleteInfo processJob(AnyJobConfigInfo config, SubmitInventoryUpdate submitInventory, SubmitEnrollmentRequest submitEnrollmentRequest, SubmitDiscoveryResults sdr)
+        private ILogger _logger;
+        public JobResult ProcessJob(ManagementJobConfiguration config)
         {
-            Initialize(config);
+            _logger = LogHandler.GetClassLogger<Management>();
+            Initialize(config.CertificateStoreDetails.ClientMachine, config.ServerUsername, config.ServerPassword, config.JobHistoryId, _logger);
 
-            switch (config.Job.OperationType)
+            switch (config.OperationType)
             {
-                case AnyJobOperationType.Add:
-                    string certType = GetAviCertType(config.Store.StorePath);
-                    return AddCertificateAsync(config.Job, certType).Result;
-                case AnyJobOperationType.Remove:
-                    return DeleteCertificateAsync(config.Job.Alias).Result;
+                case CertStoreOperationType.Add:
+                    string certType = GetAviCertType(config.CertificateStoreDetails.StorePath);
+                    return AddCertificateAsync(config.JobCertificate, config.Overwrite, certType).Result;
+                case CertStoreOperationType.Remove:
+                    return DeleteCertificateAsync(config.JobCertificate.Alias).Result;
                 default:
-                    return new AnyJobCompleteInfo()
+                    return new JobResult()
                     {
-                        Status = 4,
-                        Message = "Invalid Management Option"
+                        Result = OrchestratorJobStatusJobResult.Failure,
+                        FailureMessage = "Invalid Management Option",
+                        JobHistoryId = config.JobHistoryId
                     };
             }
         }
 
-        private async Task<AnyJobCompleteInfo> AddCertificateAsync(AnyJobJobInfo jobInfo, string certType)
+        private async Task<JobResult> AddCertificateAsync(ManagementJobCertificate certInfo, bool overwrite, string certType)
         {
             // transform jobInfo into Avi Certificate
-            SSLKeyAndCertificate cert = ConvertToAviCertificate(certType, jobInfo.EntryContents, jobInfo.PfxPassword);
-            cert.name = jobInfo.Alias;
+            SSLKeyAndCertificate cert = ConvertToAviCertificate(certType, certInfo.Contents, certInfo.PrivateKeyPassword);
+            cert.name = certInfo.Alias;
 
             // if overwrite is set, check for existing cert by alias a.k.a. name
-            if (jobInfo.Overwrite)
+            if (overwrite)
             {
                 string uuid = null;
                 try
                 {
-                    SSLKeyAndCertificate foundCert = await Client.GetCertificateByName(jobInfo.Alias);
+                    SSLKeyAndCertificate foundCert = await Client.GetCertificateByName(certInfo.Alias);
                     uuid = foundCert.uuid;
                 }
                 catch (Exception ex)
                 {
                     // assuming cert was not found (404)
                     // might need to check this assumption
-                    Logger.Warn($"Certificate marked to overwrite but no matching certificate found with name '{jobInfo.Alias}' in Avi Vantage");
+                    _logger.LogWarning($"Certificate marked to overwrite but no matching certificate found with name '{certInfo.Alias}' in Avi Vantage");
                 }
 
                 if (!string.IsNullOrEmpty(uuid))
@@ -83,7 +84,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
                 else
                 {
                     // no cert found
-                    Logger.Info($"No cert found to overwrite with name '{jobInfo.Alias}'");
+                    _logger.LogInformation($"No cert found to overwrite with name '{certInfo.Alias}'");
                 }
             }
 
@@ -99,7 +100,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
             return Success();
         }
 
-        private async Task<AnyJobCompleteInfo> DeleteCertificateAsync(string name)
+        private async Task<JobResult> DeleteCertificateAsync(string name)
         {
             string uuid;
             try

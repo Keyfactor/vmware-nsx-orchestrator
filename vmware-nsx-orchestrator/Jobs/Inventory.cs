@@ -13,27 +13,26 @@
 // limitations under the License.
 
 using Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models;
-using Keyfactor.Platform.Extensions.Agents;
-using Keyfactor.Platform.Extensions.Agents.Delegates;
-using Keyfactor.Platform.Extensions.Agents.Enums;
-using Keyfactor.Platform.Extensions.Agents.Interfaces;
+using Keyfactor.Logging;
+using Keyfactor.Orchestrators.Extensions;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 
 namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 {
-    [Job(Constants.JobTypes.INVENTORY)]
-    public class Inventory : NsxJob, IAgentJobExtension
+    public class Inventory : NsxJob, IInventoryJobExtension
     {
-        public override AnyJobCompleteInfo processJob(AnyJobConfigInfo config, SubmitInventoryUpdate submitInventory, SubmitEnrollmentRequest submitEnrollmentRequest, SubmitDiscoveryResults sdr)
+        public JobResult ProcessJob(InventoryJobConfiguration config, SubmitInventoryUpdate submitInventory)
         {
-            Initialize(config);
+            ILogger logger = LogHandler.GetClassLogger<Inventory>();
+            Initialize(config.CertificateStoreDetails.ClientMachine, config.ServerUsername, config.ServerPassword, config.JobHistoryId, logger);
             List<SSLKeyAndCertificate> allCerts;
-            List<AgentCertStoreInventoryItem> inventory = new List<AgentCertStoreInventoryItem>();
+            List<CurrentInventoryItem> inventory = new List<CurrentInventoryItem>();
 
             try
             {
-                string certType = GetAviCertType(config.Store.StorePath);
+                string certType = GetAviCertType(config.CertificateStoreDetails.StorePath);
                 allCerts = Client.GetAllCertificates(certType).Result;
             }
             catch (Exception ex)
@@ -43,13 +42,13 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 
             foreach(var foundCert in allCerts)
             {
-                inventory.Add(new AgentCertStoreInventoryItem()
+                inventory.Add(new CurrentInventoryItem()
                 {
                     Alias = foundCert.name,
                     Certificates = new string[] { foundCert.certificate.certificate }, // need to check base64 status
                     PrivateKeyEntry = !string.IsNullOrEmpty(foundCert.key),
                     UseChainLevel = false,
-                    ItemStatus = AgentInventoryItemStatus.Unknown
+                    ItemStatus = Orchestrators.Common.Enums.OrchestratorInventoryItemStatus.Unknown
                 });
             }
 

@@ -1,0 +1,15 @@
+{
+  "extensions": {
+    "Keyfactor.Orchestrators.Extensions.IOrchestratorJobExtension": {
+      "CertStores.VMware-NSX.Inventory": {
+        "assemblypath": "vmware-nsx-orchestrator.dll",
+        "TypeFullName": "Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs.Inventory"
+      },
+      "CertStores.VMware-NSX.Management": {
+        "assemblypath": "vmware-nsx-orchestrator.dll",
+        "TypeFullName": "Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs.Management"
+      }
+    }
+  }
+}
+  

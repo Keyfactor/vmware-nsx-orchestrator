@@ -12,33 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using CSS.Common.Logging;
-using CSS.PKI.PrivateKeys;
 using Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models;
-using Keyfactor.Platform.Extensions.Agents;
-using Keyfactor.Platform.Extensions.Agents.Delegates;
-using Keyfactor.Platform.Extensions.Agents.Interfaces;
+using Keyfactor.Logging;
+using Keyfactor.PKI.PrivateKeys;
+using Keyfactor.Orchestrators.Common.Enums;
+using Keyfactor.Orchestrators.Extensions;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using AviConstants = Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models.Constants;
 
 namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 {
-    public abstract class NsxJob : LoggingClientBase, IAgentJobExtension
+    public abstract class NsxJob : IOrchestratorJobExtension
     {
+        private ILogger _logger;
+        private long _jobHistoryId;
         private protected NsxClient Client { get; set; }
 
-        public string GetJobClass()
-        {
-            JobAttribute attribute = GetType().GetCustomAttributes(true).First(a => a.GetType() == typeof(JobAttribute)) as JobAttribute;
-            return attribute?.JobClass ?? string.Empty;
-        }
-
-        public string GetStoreType() => Constants.STORE_TYPE_NAME;
-
-        public abstract AnyJobCompleteInfo processJob(AnyJobConfigInfo config, SubmitInventoryUpdate submitInventory, SubmitEnrollmentRequest submitEnrollmentRequest, SubmitDiscoveryResults sdr);
+        public string ExtensionName => "VMware-NSX";
 
         private protected SSLKeyAndCertificate ConvertToAviCertificate(string certType, string base64cert, string password)
         {
@@ -85,36 +78,39 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             return AviConstants.SSLCertificate.Type.GetType(certType);
         }
 
-        private protected void Initialize(AnyJobConfigInfo config)
+        private protected void Initialize(string clientMachine, string username, string password, long jobHistoryId, ILogger logger)
         {
+            _logger = logger;
+            _jobHistoryId = jobHistoryId;
             try
             {
-                Client = new AviVantageClient(config.Store.ClientMachine, config.Server.Username, config.Server.Password);
+                Client = new NsxClient(clientMachine, username, password);
             }
             catch (Exception ex)
             {
                 ThrowError(ex, "Initialization");
             }
-            Logger.Trace($"Configuration complete for {GetStoreType()} {GetJobClass()}.");
+            _logger.LogTrace($"Configuration complete for {ExtensionName}.");
         }
 
-        private protected AnyJobCompleteInfo Success(string message = null)
+        private protected JobResult Success(string message = null)
         {
-            return new AnyJobCompleteInfo()
+            return new JobResult()
             {
-                Status = 2,
-                Message = message ?? $"{GetStoreType()} {GetJobClass()} Completed Successfully."
+                Result = OrchestratorJobStatusJobResult.Success,
+                JobHistoryId = _jobHistoryId
             };
         }
 
-        private protected AnyJobCompleteInfo ThrowError(Exception exception, string jobSection)
+        private protected JobResult ThrowError(Exception exception, string jobSection)
         {
             string message = FlattenException(exception);
-            Logger.Error($"Error performing {jobSection} in {GetStoreType()} {GetJobClass()} - {message}");
-            return new AnyJobCompleteInfo()
+            _logger.LogError($"Error performing {jobSection} in {ExtensionName} - {message}");
+            return new JobResult()
             {
-                Status = 4,
-                Message = message
+                Result = OrchestratorJobStatusJobResult.Failure,
+                FailureMessage = message,
+                JobHistoryId = _jobHistoryId
             };
         }
 
