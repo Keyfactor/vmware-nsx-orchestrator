@@ -16,6 +16,7 @@ using Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
@@ -26,7 +27,16 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
         public JobResult ProcessJob(InventoryJobConfiguration config, SubmitInventoryUpdate submitInventory)
         {
             ILogger logger = LogHandler.GetClassLogger<Inventory>();
-            Initialize(config.CertificateStoreDetails.ClientMachine, config.ServerUsername, config.ServerPassword, config.JobHistoryId, logger);
+
+            string tenant = null;
+            dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
+            if (props["tenant"] != null)
+            {
+                tenant = props["tenant"];
+                logger.LogDebug($"Using tenant {tenant}");
+            }
+
+            Initialize(config.CertificateStoreDetails.ClientMachine, config.ServerUsername, config.ServerPassword, tenant, config.JobHistoryId, logger);
             List<SSLKeyAndCertificate> allCerts;
             List<CurrentInventoryItem> inventory = new List<CurrentInventoryItem>();
 

@@ -17,6 +17,7 @@ using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
 
@@ -28,7 +29,16 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
         public JobResult ProcessJob(ManagementJobConfiguration config)
         {
             _logger = LogHandler.GetClassLogger<Management>();
-            Initialize(config.CertificateStoreDetails.ClientMachine, config.ServerUsername, config.ServerPassword, config.JobHistoryId, _logger);
+
+            string tenant = null;
+            dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
+            if (props["tenant"] != null)
+            {
+                tenant = props["tenant"];
+                _logger.LogDebug($"Using tenant {tenant}");
+            }
+
+            Initialize(config.CertificateStoreDetails.ClientMachine, config.ServerUsername, config.ServerPassword, tenant, config.JobHistoryId, _logger);
 
             switch (config.OperationType)
             {
