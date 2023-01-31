@@ -44,7 +44,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 
             try
             {
-                string certType = GetAviCertType(certTypeInput);
+                string certType = GetCertType(certTypeInput);
                 allCerts = Client.GetAllCertificates(certType).Result;
             }
             catch (Exception ex)

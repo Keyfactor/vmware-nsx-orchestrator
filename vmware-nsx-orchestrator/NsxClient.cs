@@ -108,7 +108,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             if (!response.IsSuccessStatusCode)
             {
                 string error = new StreamReader(response.Content.ReadAsStreamAsync().Result).ReadToEnd();
-                throw new Exception($"Request to Avi Vantage was not successful - {response.StatusCode} - {error}");
+                throw new Exception($"Request to VMware NSX ALB was not successful - {response.StatusCode} - {error}");
             }
         }
     }

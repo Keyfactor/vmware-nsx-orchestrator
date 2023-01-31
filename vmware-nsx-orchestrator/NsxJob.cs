@@ -21,7 +21,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using AviConstants = Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models.Constants;
+using NsxConstants = Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models.Constants;
 
 namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 {
@@ -33,22 +33,22 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 
         public string ExtensionName => "VMware-NSX";
 
-        private protected SSLKeyAndCertificate ConvertToAviCertificate(string certType, string base64cert, string password)
+        private protected SSLKeyAndCertificate ConvertToNsxCertificate(string certType, string base64cert, string password)
         {
-            SSLKeyAndCertificate aviCert = new SSLKeyAndCertificate()
+            SSLKeyAndCertificate nsxCert = new SSLKeyAndCertificate()
             {
                 certificate = new SSLCertificate(),
-                status = AviConstants.SSLCertificate.Status.FINISHED,
+                status = NsxConstants.SSLCertificate.Status.FINISHED,
                 type = certType
             };
 
             if (string.IsNullOrEmpty(password))
             {
                 // CA certificate, put contents directly in PEM armor
-                aviCert.certificate.certificate = $"-----BEGIN CERTIFICATE-----\n{base64cert}\n-----END CERTIFICATE-----";
-                aviCert.certificate_base64 = false;
-                aviCert.format = AviConstants.SSLCertificate.Format.PEM;
-                aviCert.key = "";
+                nsxCert.certificate.certificate = $"-----BEGIN CERTIFICATE-----\n{base64cert}\n-----END CERTIFICATE-----";
+                nsxCert.certificate_base64 = false;
+                nsxCert.format = NsxConstants.SSLCertificate.Format.PEM;
+                nsxCert.key = "";
             }
             else
             {
@@ -57,7 +57,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
                 X509Certificate2 x509 = new X509Certificate2(certBytes, password);
                 PrivateKeyConverter pkey = PrivateKeyConverterFactory.FromPKCS12(certBytes, password);
 
-                aviCert.certificate.certificate = $"-----BEGIN CERTIFICATE-----\n{Convert.ToBase64String(x509.RawData)}\n-----END CERTIFICATE-----";
+                nsxCert.certificate.certificate = $"-----BEGIN CERTIFICATE-----\n{Convert.ToBase64String(x509.RawData)}\n-----END CERTIFICATE-----";
 
                 // check type of key
                 string keyType;
@@ -65,17 +65,17 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
                 {
                     keyType = keyAlg != null ? "RSA" : "EC";
                 }
-                aviCert.key = $"-----BEGIN {keyType} PRIVATE KEY-----\n{Convert.ToBase64String(pkey.ToPkcs8BlobUnencrypted())}\n-----END {keyType} PRIVATE KEY-----";
-                aviCert.key_base64 = false;
-                aviCert.key_passphrase = password;
+                nsxCert.key = $"-----BEGIN {keyType} PRIVATE KEY-----\n{Convert.ToBase64String(pkey.ToPkcs8BlobUnencrypted())}\n-----END {keyType} PRIVATE KEY-----";
+                nsxCert.key_base64 = false;
+                nsxCert.key_passphrase = password;
             }
 
-            return aviCert;
+            return nsxCert;
         }
 
-        private protected string GetAviCertType(string certType)
+        private protected string GetCertType(string certType)
         {
-            return AviConstants.SSLCertificate.Type.GetType(certType);
+            return NsxConstants.SSLCertificate.Type.GetType(certType);
         }
 
         private protected string GetTenant(string storePath)
