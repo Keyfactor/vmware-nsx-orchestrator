@@ -30,20 +30,22 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
         {
             _logger = LogHandler.GetClassLogger<Management>();
 
-            string tenant = null;
             dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
-            if (props["tenant"] != null)
+            if (props["type"] == null)
             {
-                tenant = props["tenant"];
-                _logger.LogDebug($"Using tenant {tenant}");
+                var e = new Exception("Required field 'type' for Certificate Type is missing.");
+                return ThrowError(e, "Management Config");
             }
+            string certTypeInput = props["type"];
+
+            string tenant = GetTenant(config.CertificateStoreDetails.StorePath);
 
             Initialize(config.CertificateStoreDetails.ClientMachine, config.ServerUsername, config.ServerPassword, tenant, config.JobHistoryId, _logger);
 
             switch (config.OperationType)
             {
                 case CertStoreOperationType.Add:
-                    string certType = GetAviCertType(config.CertificateStoreDetails.StorePath);
+                    string certType = GetAviCertType(certTypeInput);
                     return AddCertificateAsync(config.JobCertificate, config.Overwrite, certType).Result;
                 case CertStoreOperationType.Remove:
                     return DeleteCertificateAsync(config.JobCertificate.Alias).Result;

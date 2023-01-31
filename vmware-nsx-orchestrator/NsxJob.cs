@@ -78,6 +78,18 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             return AviConstants.SSLCertificate.Type.GetType(certType);
         }
 
+        private protected string GetTenant(string storePath)
+        {
+            if (string.IsNullOrWhiteSpace(storePath)
+                || storePath.Equals("DEFAULT"))
+            {
+                // if store path was set to DEFAULT, use default tenant i.e. no tenant
+                return null;
+            }
+
+            return storePath;
+        }
+
         private protected void Initialize(string clientMachine, string username, string password, string tenant, long jobHistoryId, ILogger logger)
         {
             _logger = logger;

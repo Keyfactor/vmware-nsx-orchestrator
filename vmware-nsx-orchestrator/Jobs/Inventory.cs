@@ -28,13 +28,15 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
         {
             ILogger logger = LogHandler.GetClassLogger<Inventory>();
 
-            string tenant = null;
             dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
-            if (props["tenant"] != null)
+            if (props["type"] == null)
             {
-                tenant = props["tenant"];
-                logger.LogDebug($"Using tenant {tenant}");
-            }
+                var e = new Exception("Required field 'type' for Certificate Type is missing.");
+                return ThrowError(e, "Inventory Config");
+            }            
+            string certTypeInput = props["type"];
+
+            string tenant = GetTenant(config.CertificateStoreDetails.StorePath);
 
             Initialize(config.CertificateStoreDetails.ClientMachine, config.ServerUsername, config.ServerPassword, tenant, config.JobHistoryId, logger);
             List<SSLKeyAndCertificate> allCerts;
@@ -42,7 +44,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 
             try
             {
-                string certType = GetAviCertType(config.CertificateStoreDetails.StorePath);
+                string certType = GetAviCertType(certTypeInput);
                 allCerts = Client.GetAllCertificates(certType).Result;
             }
             catch (Exception ex)
