@@ -17,7 +17,6 @@ using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
 
@@ -25,27 +24,18 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 {
     public class Management : NsxJob, IManagementJobExtension
     {
-        private ILogger _logger;
         public JobResult ProcessJob(ManagementJobConfiguration config)
         {
             _logger = LogHandler.GetClassLogger<Management>();
 
-            dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
-            if (props["type"] == null)
-            {
-                var e = new Exception("Required field 'type' for Certificate Type is missing.");
-                return ThrowError(e, "Management Config");
-            }
-            string certTypeInput = props["type"];
+            string clientMachine = ParseClientMachineUrl(config.CertificateStoreDetails.ClientMachine, out string tenant);
 
-            string tenant = GetTenant(config.CertificateStoreDetails.StorePath);
-
-            Initialize(config.CertificateStoreDetails.ClientMachine, config.ServerUsername, config.ServerPassword, tenant, config.JobHistoryId, _logger);
+            Initialize(clientMachine, config.ServerUsername, config.ServerPassword, tenant, config.JobHistoryId);
 
             switch (config.OperationType)
             {
                 case CertStoreOperationType.Add:
-                    string certType = GetCertType(certTypeInput);
+                    string certType = GetCertType(config.CertificateStoreDetails.StorePath);
                     return AddCertificateAsync(config.JobCertificate, config.Overwrite, certType).Result;
                 case CertStoreOperationType.Remove:
                     return DeleteCertificateAsync(config.JobCertificate.Alias).Result;

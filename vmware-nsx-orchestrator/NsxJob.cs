@@ -27,7 +27,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 {
     public abstract class NsxJob : IOrchestratorJobExtension
     {
-        private ILogger _logger;
+        private protected ILogger _logger;
         private long _jobHistoryId;
         private protected NsxClient Client { get; set; }
 
@@ -78,21 +78,36 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             return NsxConstants.SSLCertificate.Type.GetType(certType);
         }
 
-        private protected string GetTenant(string storePath)
+        private protected string ParseClientMachineUrl(string clientMachine, out string tenant)
         {
-            if (string.IsNullOrWhiteSpace(storePath)
-                || storePath.Equals("DEFAULT"))
+            string url;
+            _logger.LogTrace("Parsing NSX client machine for tenant value");
+
+            // if a tenant is being used, the client machine will be formatted: [TENANT]client.machine.url
+            if (clientMachine.Contains("[")
+                && clientMachine.Contains("]"))
             {
-                // if store path was set to DEFAULT, use default tenant i.e. no tenant
-                return null;
+                _logger.LogDebug($"Splitting original client machine: {clientMachine}");
+                var split = clientMachine.Split(new string[] { "[", "]" }, 2, StringSplitOptions.RemoveEmptyEntries);
+                tenant = split[0];
+                url = split[1];
+
+                _logger.LogDebug($"Parsed tenant: {tenant}");
+            }
+            else
+            {
+                tenant = null; // null tenant maps to Default tenant
+                url = clientMachine;
             }
 
-            return storePath;
+            _logger.LogDebug($"Parsed client machine url: {url}");
+            return url;
         }
 
-        private protected void Initialize(string clientMachine, string username, string password, string tenant, long jobHistoryId, ILogger logger)
+
+
+        private protected void Initialize(string clientMachine, string username, string password, string tenant, long jobHistoryId)
         {
-            _logger = logger;
             _jobHistoryId = jobHistoryId;
             try
             {

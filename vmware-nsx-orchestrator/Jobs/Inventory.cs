@@ -15,8 +15,6 @@
 using Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Extensions;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
@@ -26,25 +24,17 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
     {
         public JobResult ProcessJob(InventoryJobConfiguration config, SubmitInventoryUpdate submitInventory)
         {
-            ILogger logger = LogHandler.GetClassLogger<Inventory>();
+            _logger = LogHandler.GetClassLogger<Inventory>();
 
-            dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
-            if (props["type"] == null)
-            {
-                var e = new Exception("Required field 'type' for Certificate Type is missing.");
-                return ThrowError(e, "Inventory Config");
-            }            
-            string certTypeInput = props["type"];
+            string clientMachine = ParseClientMachineUrl(config.CertificateStoreDetails.ClientMachine, out string tenant);
 
-            string tenant = GetTenant(config.CertificateStoreDetails.StorePath);
-
-            Initialize(config.CertificateStoreDetails.ClientMachine, config.ServerUsername, config.ServerPassword, tenant, config.JobHistoryId, logger);
+            Initialize(clientMachine, config.ServerUsername, config.ServerPassword, tenant, config.JobHistoryId);
             List<SSLKeyAndCertificate> allCerts;
             List<CurrentInventoryItem> inventory = new List<CurrentInventoryItem>();
 
             try
             {
-                string certType = GetCertType(certTypeInput);
+                string certType = GetCertType(config.CertificateStoreDetails.StorePath);
                 allCerts = Client.GetAllCertificates(certType).Result;
             }
             catch (Exception ex)
