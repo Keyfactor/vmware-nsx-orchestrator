@@ -24,16 +24,18 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 {
     public class Management : NsxJob, IManagementJobExtension
     {
-        private ILogger _logger;
         public JobResult ProcessJob(ManagementJobConfiguration config)
         {
             _logger = LogHandler.GetClassLogger<Management>();
-            Initialize(config.CertificateStoreDetails.ClientMachine, config.ServerUsername, config.ServerPassword, config.JobHistoryId, _logger);
+
+            string clientMachine = ParseClientMachineUrl(config.CertificateStoreDetails.ClientMachine, out string tenant);
+
+            Initialize(clientMachine, config.ServerUsername, config.ServerPassword, tenant, config.JobHistoryId);
 
             switch (config.OperationType)
             {
                 case CertStoreOperationType.Add:
-                    string certType = GetAviCertType(config.CertificateStoreDetails.StorePath);
+                    string certType = GetCertType(config.CertificateStoreDetails.StorePath);
                     return AddCertificateAsync(config.JobCertificate, config.Overwrite, certType).Result;
                 case CertStoreOperationType.Remove:
                     return DeleteCertificateAsync(config.JobCertificate.Alias).Result;
@@ -49,8 +51,8 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 
         private async Task<JobResult> AddCertificateAsync(ManagementJobCertificate certInfo, bool overwrite, string certType)
         {
-            // transform jobInfo into Avi Certificate
-            SSLKeyAndCertificate cert = ConvertToAviCertificate(certType, certInfo.Contents, certInfo.PrivateKeyPassword);
+            // transform jobInfo into Nsx Certificate
+            SSLKeyAndCertificate cert = ConvertToNsxCertificate(certType, certInfo.Contents, certInfo.PrivateKeyPassword);
             cert.name = certInfo.Alias;
 
             // if overwrite is set, check for existing cert by alias a.k.a. name
@@ -66,7 +68,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
                 {
                     // assuming cert was not found (404)
                     // might need to check this assumption
-                    _logger.LogWarning($"Certificate marked to overwrite but no matching certificate found with name '{certInfo.Alias}' in Avi Vantage");
+                    _logger.LogWarning($"Certificate marked to overwrite but no matching certificate found with name '{certInfo.Alias}' in NSX ALB");
                 }
 
                 if (!string.IsNullOrEmpty(uuid))
@@ -78,7 +80,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
                     }
                     catch (Exception ex)
                     {
-                        return ThrowError(ex, "update to existing certificate in Avi Vantage");
+                        return ThrowError(ex, "update to existing certificate in NSX ALB");
                     }
                 }
                 else
@@ -95,7 +97,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
             }
             catch (Exception ex)
             {
-                return ThrowError(ex, "addition of new certificate to Avi Vantage");
+                return ThrowError(ex, "addition of new certificate to NSX ALB");
             }
             return Success();
         }
@@ -118,7 +120,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
             }
             catch (Exception ex)
             {
-                return ThrowError(ex, $"Removing certificate by uuid '{uuid}' from Avi Vantage");
+                return ThrowError(ex, $"Removing certificate by uuid '{uuid}' from NSX ALB");
             }
             return Success();
         }

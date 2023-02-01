@@ -27,7 +27,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models
         public string status;
         public string type;
 
-        // Avi Vantage generated fields
+        // NSX ALB generated fields
         public string url;
         public string uuid;
         public string tenant_ref;
