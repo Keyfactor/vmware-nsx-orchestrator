@@ -1,34 +1,38 @@
 ﻿
-# Introduction 
-The AVI certificate store type is set up so that each Cert Store points to a specific Avi Vantage instance and certificate type.
-For multiple certificate types on the same Avi Vantage instance, create a certificate store for each type to manage.
+## Use Cases
+The VMware NSX ALB certificate store type is set up so that each Certificate Store points to a specific NSX ALB instance (and optionally a specific tenant) and certificate type.
+For multiple certificate types on the same NSX instance, create a certificate store for each type to manage.
 
-Application and System certs are used by Avi for SSL offloading and require private keys. CA certs are used to
-build and validate certificate chains and do not require private keys.
+Application and System certs are used by NSX ALB for SSL offloading and require private keys. CA certs are used to build and validate certificate chains and do not require private keys.
 
-# Setting up AVI Cert Store Type
-Short Name: `AVI`
-Needs Server: `true`
-Custom Alias: `required`
-Store Path Type: `Multiple Choice`
-Store Path Value: `'Application, Controller, CA'`
-Private Keys: `Optional`
-Job Types: `Add, Remove`
+## VMware NSX ALB Configuration
+The NSX ALB platform needs some configuration in order to allow the Orchestrator to communicate with it.
+Basic Authentication needs to be enabled. Under Administration -> Settings -> Access Settings edit the System Access settings to allow Basic Authentication.
+The listed SSL/TLS certificate also needs to be trusted by the Orchestrator so that HTTPS can be used successfully.
 
-# Supported Functionality
-- Inventory, Management, Renewal.
-- Agent can manage CA certificates present on Avi Vantage.
-- Certificates (with private keys required) can also replaced in-place on the Avi Vantage platform.
+A user also needs to be set up with a password that can be used to authenticate during Orchestrator requests. This user should be a Tenant Admin or Security Admin on the tenant that will be managed.
+If a user should be used for multiple tenants, they will need to be a system admin. The tenant that they are initially assigned to be will be considered the "default" tenant if no tenant is specified for the certificate store.
 
-# Not Implemented/Supported
-- Discovery
+## VMware NSX ALB Orchestrator Extension Configuration
+**1. Create the New Certificate Store Type for the NSX orchestrator extension**
 
+In Keyfactor Command create a new Certificate Store Type similar to the one below by clicking Settings (the gear icon in the top right) => Certificate Store Types => Add:
 
-# Notes
-- Required aliases act as the name for the certificate in the AVI Vantage system. These are also used to renew/replace and delete existing certificates.
-- While Private Keys are optional, they _are required_ for Application or Controller type certificates.
+![](images/store-type-basic.png)
+![](images/store-type-advanced.png)
 
- ***
+**2. Create a new NSX Certificate Store**
 
-### License
-[Apache](https://apache.org/licenses/LICENSE-2.0)
+After the Certificate Store Type has been configured, a new NSX Certificate Store can be created.
+When creating the store, if a tenant other than the API user's default tenant should be used, the Client Machine should be preface with [tenant] in brackets.
+
+| Certificate Store parameter | Input | Alternative Input |
+|-|-|-|
+| Client Machine | [optional-tenant-name]https://my.nsx.url/ | https://my.nsx.url/ |
+| Store Path | Application | CA (or Controller) |
+
+**3. Adding or Replacing (Renewing) Certificates**
+The required alias acts as the name for the certificate in the VMware NSX ALB system. These are also used to renew/replace and delete existing certificates.
+When adding a certificate, selecting `Overwrite` and entering the same name (alias) as an existing certificate will replace that certificate, allowing for renewals of existing certificates.
+
+Additionally, while private keys are optional for CA type certificates, they _are required_ for Application or Controller type certificates.
