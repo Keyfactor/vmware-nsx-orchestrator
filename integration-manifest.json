@@ -3,8 +3,8 @@
   "integration_type": "orchestrator",
   "name": "VMware NSX Advanced Load Balancer (Avi)",
   "status": "production",
-  "link_github": false,
-  "update_catalog": false,
+  "link_github": true,
+  "update_catalog": true,
   "description": "The VMware NSX Advanced Load Balancer (formerly Avi Vantage) Orchestrator allows for the management of certificates stored in the VMware NSX ALB solution. Application, System, and CA cert types are supported. Inventory, Management, and Renewal functions are supported.",
   "about": {
     "orchestrator": {
