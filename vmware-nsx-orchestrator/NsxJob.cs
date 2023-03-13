@@ -21,34 +21,34 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using AviConstants = Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models.Constants;
+using NsxConstants = Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models.Constants;
 
 namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 {
     public abstract class NsxJob : IOrchestratorJobExtension
     {
-        private ILogger _logger;
+        private protected ILogger _logger;
         private long _jobHistoryId;
         private protected NsxClient Client { get; set; }
 
         public string ExtensionName => "VMware-NSX";
 
-        private protected SSLKeyAndCertificate ConvertToAviCertificate(string certType, string base64cert, string password)
+        private protected SSLKeyAndCertificate ConvertToNsxCertificate(string certType, string base64cert, string password)
         {
-            SSLKeyAndCertificate aviCert = new SSLKeyAndCertificate()
+            SSLKeyAndCertificate nsxCert = new SSLKeyAndCertificate()
             {
                 certificate = new SSLCertificate(),
-                status = AviConstants.SSLCertificate.Status.FINISHED,
+                status = NsxConstants.SSLCertificate.Status.FINISHED,
                 type = certType
             };
 
             if (string.IsNullOrEmpty(password))
             {
                 // CA certificate, put contents directly in PEM armor
-                aviCert.certificate.certificate = $"-----BEGIN CERTIFICATE-----\n{base64cert}\n-----END CERTIFICATE-----";
-                aviCert.certificate_base64 = false;
-                aviCert.format = AviConstants.SSLCertificate.Format.PEM;
-                aviCert.key = "";
+                nsxCert.certificate.certificate = $"-----BEGIN CERTIFICATE-----\n{base64cert}\n-----END CERTIFICATE-----";
+                nsxCert.certificate_base64 = false;
+                nsxCert.format = NsxConstants.SSLCertificate.Format.PEM;
+                nsxCert.key = "";
             }
             else
             {
@@ -57,7 +57,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
                 X509Certificate2 x509 = new X509Certificate2(certBytes, password);
                 PrivateKeyConverter pkey = PrivateKeyConverterFactory.FromPKCS12(certBytes, password);
 
-                aviCert.certificate.certificate = $"-----BEGIN CERTIFICATE-----\n{Convert.ToBase64String(x509.RawData)}\n-----END CERTIFICATE-----";
+                nsxCert.certificate.certificate = $"-----BEGIN CERTIFICATE-----\n{Convert.ToBase64String(x509.RawData)}\n-----END CERTIFICATE-----";
 
                 // check type of key
                 string keyType;
@@ -65,26 +65,53 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
                 {
                     keyType = keyAlg != null ? "RSA" : "EC";
                 }
-                aviCert.key = $"-----BEGIN {keyType} PRIVATE KEY-----\n{Convert.ToBase64String(pkey.ToPkcs8BlobUnencrypted())}\n-----END {keyType} PRIVATE KEY-----";
-                aviCert.key_base64 = false;
-                aviCert.key_passphrase = password;
+                nsxCert.key = $"-----BEGIN {keyType} PRIVATE KEY-----\n{Convert.ToBase64String(pkey.ToPkcs8BlobUnencrypted())}\n-----END {keyType} PRIVATE KEY-----";
+                nsxCert.key_base64 = false;
+                nsxCert.key_passphrase = password;
             }
 
-            return aviCert;
+            return nsxCert;
         }
 
-        private protected string GetAviCertType(string certType)
+        private protected string GetCertType(string certType)
         {
-            return AviConstants.SSLCertificate.Type.GetType(certType);
+            return NsxConstants.SSLCertificate.Type.GetType(certType);
         }
 
-        private protected void Initialize(string clientMachine, string username, string password, long jobHistoryId, ILogger logger)
+        private protected string ParseClientMachineUrl(string clientMachine, out string tenant)
         {
-            _logger = logger;
+            string url;
+            _logger.LogTrace("Parsing NSX client machine for tenant value");
+
+            // if a tenant is being used, the client machine will be formatted: [TENANT]client.machine.url
+            if (clientMachine.Contains("[")
+                && clientMachine.Contains("]"))
+            {
+                _logger.LogDebug($"Splitting original client machine: {clientMachine}");
+                var split = clientMachine.Split(new string[] { "[", "]" }, 2, StringSplitOptions.RemoveEmptyEntries);
+                tenant = split[0];
+                url = split[1];
+
+                _logger.LogDebug($"Parsed tenant: {tenant}");
+            }
+            else
+            {
+                tenant = null; // null tenant maps to Default tenant
+                url = clientMachine;
+            }
+
+            _logger.LogDebug($"Parsed client machine url: {url}");
+            return url;
+        }
+
+
+
+        private protected void Initialize(string clientMachine, string username, string password, string tenant, long jobHistoryId)
+        {
             _jobHistoryId = jobHistoryId;
             try
             {
-                Client = new NsxClient(clientMachine, username, password);
+                Client = new NsxClient(clientMachine, username, password, tenant);
             }
             catch (Exception ex)
             {
