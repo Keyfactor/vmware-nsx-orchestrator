@@ -61,7 +61,9 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
                 string uuid = null;
                 try
                 {
+                    _logger.LogTrace($"Looking for existing certificate with name '{certInfo.Alias}'");
                     SSLKeyAndCertificate foundCert = await Client.GetCertificateByName(certInfo.Alias);
+                    _logger.LogTrace($"Found existing certificate with name '{certInfo.Alias}' and UUID '{foundCert.uuid}'");
                     uuid = foundCert.uuid;
                 }
                 catch (Exception ex)
@@ -76,6 +78,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
                     // replace found cert with cert to add
                     try
                     {
+                        _logger.LogDebug($"Attempting to update existing certificate with name '{certInfo.Alias}'");
                         await Client.UpdateCertificate(uuid, cert);
                     }
                     catch (Exception ex)
@@ -85,20 +88,34 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
                 }
                 else
                 {
-                    // no cert found
+                    // no cert found to overwrite
                     _logger.LogInformation($"No cert found to overwrite with name '{certInfo.Alias}'");
+                    // add overwrite certificate as normal
+                    try
+                    {
+                        _logger.LogDebug($"Adding certificate after finding no existing certificate with name '{certInfo.Alias}'");
+                        await Client.AddCertificate(cert);
+                    }
+                    catch (Exception ex)
+                    {
+                        return ThrowError(ex, "addition of certificate (with none to overwrite) to NSX ALB");
+                    }
+                }
+            }
+            else
+            {
+                // add new certificate
+                try
+                {
+                    _logger.LogDebug($"Adding new certificate with name '{certInfo.Alias}'");
+                    await Client.AddCertificate(cert);
+                }
+                catch (Exception ex)
+                {
+                    return ThrowError(ex, "addition of new certificate to NSX ALB");
                 }
             }
 
-            // add new certificate
-            try
-            {
-                await Client.AddCertificate(cert);
-            }
-            catch (Exception ex)
-            {
-                return ThrowError(ex, "addition of new certificate to NSX ALB");
-            }
             return Success();
         }
 
