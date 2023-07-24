@@ -16,6 +16,7 @@ using Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
+using Keyfactor.Orchestrators.Extensions.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
@@ -24,10 +25,14 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 {
     public class Management : NsxJob, IManagementJobExtension
     {
-        public JobResult ProcessJob(ManagementJobConfiguration config)
+        public Management(IPAMSecretResolver pam)
         {
             _logger = LogHandler.GetClassLogger<Management>();
+            _pam = pam;
+        }
 
+        public JobResult ProcessJob(ManagementJobConfiguration config)
+        {
             string clientMachine = ParseClientMachineUrl(config.CertificateStoreDetails.ClientMachine, out string tenant);
 
             Initialize(clientMachine, config, config.CertificateStoreDetails, tenant);

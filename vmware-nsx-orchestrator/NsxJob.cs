@@ -24,6 +24,7 @@ using System.Security.Cryptography.X509Certificates;
 using NsxConstants = Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models.Constants;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using Keyfactor.Orchestrators.Extensions.Interfaces;
 
 namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 {
@@ -32,6 +33,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
         private protected ILogger _logger;
         private long _jobHistoryId;
         private string _apiVersion;
+        private protected IPAMSecretResolver _pam;
         private protected NsxClient Client { get; set; }
 
         public string ExtensionName => "VMware-NSX";
@@ -119,13 +121,21 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 
             try
             {
-                Client = new NsxClient(clientMachine, config.ServerUsername, config.ServerPassword, tenant, _apiVersion);
+                string username = ResolvePamField(_pam, config.ServerUsername, "Server Username");
+                string password = ResolvePamField(_pam, config.ServerPassword, "Server Password");
+                Client = new NsxClient(clientMachine, username, password, tenant, _apiVersion);
             }
             catch (Exception ex)
             {
                 ThrowError(ex, "Initialization");
             }
             _logger.LogTrace($"Configuration complete for {ExtensionName}.");
+        }
+
+        private string ResolvePamField(IPAMSecretResolver pam, string key, string fieldName)
+        {
+            _logger.LogTrace($"Attempting to resolve PAM eligible field: '{fieldName}'");
+            return string.IsNullOrEmpty(key) ? key : pam.Resolve(key);
         }
 
         private protected JobResult Success(string message = null)
