@@ -36,13 +36,14 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             NullValueHandling = NullValueHandling.Ignore
         };
 
-        public NsxClient(string url, string username, string password, string tenant = null)
+        public NsxClient(string url, string username, string password, string tenant, string apiVersion)
         {
             _httpClient = new HttpClient();
             string authValue = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
 
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Basic {authValue}");
-            _httpClient.DefaultRequestHeaders.Add("X-Avi-Version", "22.1.1");
+            string aviVersion = apiVersion ?? "20.1.1";
+            _httpClient.DefaultRequestHeaders.Add("X-Avi-Version", aviVersion);
             if (tenant != null)
             {
                 _httpClient.DefaultRequestHeaders.Add("X-Avi-Tenant", tenant);

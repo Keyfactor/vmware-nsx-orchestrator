@@ -30,7 +30,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 
             string clientMachine = ParseClientMachineUrl(config.CertificateStoreDetails.ClientMachine, out string tenant);
 
-            Initialize(clientMachine, config.ServerUsername, config.ServerPassword, tenant, config.JobHistoryId);
+            Initialize(clientMachine, config, config.CertificateStoreDetails, tenant);
 
             switch (config.OperationType)
             {

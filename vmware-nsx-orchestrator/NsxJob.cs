@@ -22,6 +22,8 @@ using System;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using NsxConstants = Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models.Constants;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 {
@@ -29,6 +31,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
     {
         private protected ILogger _logger;
         private long _jobHistoryId;
+        private string _apiVersion;
         private protected NsxClient Client { get; set; }
 
         public string ExtensionName => "VMware-NSX";
@@ -106,12 +109,17 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 
 
 
-        private protected void Initialize(string clientMachine, string username, string password, string tenant, long jobHistoryId)
+        private protected void Initialize(string clientMachine, JobConfiguration config, CertificateStore store, string tenant)
         {
-            _jobHistoryId = jobHistoryId;
+            _jobHistoryId = config.JobHistoryId;
+
+            // check if store properties has an Api Version set
+            var storeProps = JsonConvert.DeserializeObject<Dictionary<string, string>>(store.Properties);
+            _apiVersion = storeProps.GetValueOrDefault("ApiVersion");
+
             try
             {
-                Client = new NsxClient(clientMachine, username, password, tenant);
+                Client = new NsxClient(clientMachine, config.ServerUsername, config.ServerPassword, tenant, _apiVersion);
             }
             catch (Exception ex)
             {
