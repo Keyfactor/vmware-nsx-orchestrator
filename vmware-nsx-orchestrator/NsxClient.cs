@@ -66,15 +66,30 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 #endif
         }
 
-        public async Task<List<SSLKeyAndCertificate>> GetAllCertificates(string certType)
+        public async Task<List<SSLKeyAndCertificate>> GetAllCertificates(string certType, int pageSize)
         {
-            ApiResponse response = await GetResponseAsync<ApiResponse>(await _httpClient.GetAsync(ENDPOINT + $"?type={certType}"));
-            return response.results;
+            List<SSLKeyAndCertificate> allCerts = new List<SSLKeyAndCertificate>();
+            GetCertificateResponse response;
+            int page = 0;
+            do
+            {
+                response = await GetCertificatesPage(certType, pageSize, page);
+                allCerts.AddRange(response.results);
+                page++;
+            }
+            while (!string.IsNullOrEmpty(response.next));
+
+            return allCerts;
+        }
+
+        private async Task<GetCertificateResponse> GetCertificatesPage(string certType, int pageSize, int page)
+        {
+            return await GetResponseAsync<GetCertificateResponse>(await _httpClient.GetAsync(ENDPOINT + $"?type={certType}&page={page}&page_size={pageSize}"));
         }
 
         public async Task<SSLKeyAndCertificate> GetCertificateByName(string name)
         {
-            ApiResponse response = await GetResponseAsync<ApiResponse>(await _httpClient.GetAsync(ENDPOINT + $"?name={name}"));
+            GetCertificateResponse response = await GetResponseAsync<GetCertificateResponse>(await _httpClient.GetAsync(ENDPOINT + $"?name={name}"));
             return response.results.Single();
         }
 

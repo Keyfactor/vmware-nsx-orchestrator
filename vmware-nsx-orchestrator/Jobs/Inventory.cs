@@ -23,6 +23,8 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 {
     public class Inventory : NsxJob, IInventoryJobExtension
     {
+        private const int PAGE_SIZE = 1;
+
         public Inventory(IPAMSecretResolver pam)
         {
             _logger = LogHandler.GetClassLogger<Inventory>();
@@ -40,7 +42,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
             try
             {
                 string certType = GetCertType(config.CertificateStoreDetails.StorePath);
-                allCerts = Client.GetAllCertificates(certType).Result;
+                allCerts = Client.GetAllCertificates(certType, PAGE_SIZE).Result;
             }
             catch (Exception ex)
             {
