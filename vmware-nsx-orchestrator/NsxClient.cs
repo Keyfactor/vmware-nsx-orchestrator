@@ -26,11 +26,16 @@ using System.Threading.Tasks;
 
 namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 {
-    public class NsxClient
+    public class NsxClient : IDisposable
     {
-        private HttpClient _httpClient { get; }
+        private HttpClientHandler HttpHandler { get; }
+        private HttpClient HttpClient { get; }
+        private CookieCollection LoginCookies { get; }
+        private string BaseUrl { get; }
 
-        private const string ENDPOINT = "sslkeyandcertificate";
+        private const string LOGIN_ENDPOINT = "login";
+        private const string LOGOUT_ENDPOINT = "logout";
+        private const string CERT_ENDPOINT = "api/sslkeyandcertificate";
         private readonly JsonSerializerSettings serializerSettings = new JsonSerializerSettings()
         {
             NullValueHandling = NullValueHandling.Ignore
@@ -38,15 +43,18 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 
         public NsxClient(string url, string username, string password, string tenant, string apiVersion)
         {
-            _httpClient = new HttpClient();
-            string authValue = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
+            // declare cookies and handler to be able to access them after Login process
+            CookieContainer cookies = new CookieContainer();
+            HttpHandler = new HttpClientHandler();
+            HttpHandler.CookieContainer = cookies;
 
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Basic {authValue}");
+            HttpClient = new HttpClient(HttpHandler);
+
             string aviVersion = apiVersion ?? "20.1.1";
-            _httpClient.DefaultRequestHeaders.Add("X-Avi-Version", aviVersion);
+            HttpClient.DefaultRequestHeaders.Add("X-Avi-Version", aviVersion);
             if (tenant != null)
             {
-                _httpClient.DefaultRequestHeaders.Add("X-Avi-Tenant", tenant);
+                HttpClient.DefaultRequestHeaders.Add("X-Avi-Tenant", tenant);
             }
             
             // ensure base url ends as expected
@@ -54,16 +62,49 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             {
                 url += "/";
             }
-            if (!url.EndsWith("api/", StringComparison.OrdinalIgnoreCase))
+            if (url.EndsWith("api/", StringComparison.OrdinalIgnoreCase))
             {
-                url += "api/";
+                url = url.Substring(0, url.Length - 4); // remove "api/" from end of base url
             }
-            _httpClient.BaseAddress = new Uri(url);
+            BaseUrl = url;
+            HttpClient.BaseAddress = new Uri(BaseUrl);
 
 #if DEBUG
             ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback
                 (delegate { return true; });
 #endif
+
+            Login(username, password);
+
+            // check cookies after login
+            Uri loginUri = new Uri(BaseUrl + LOGIN_ENDPOINT);
+            LoginCookies = cookies.GetCookies(loginUri);
+        }
+
+        private void Login(string username, string password)
+        {
+            dynamic loginBody = new {
+                username = username,
+                password = password
+            };
+            StringContent content = new StringContent(JsonConvert.SerializeObject(loginBody), Encoding.UTF8, "application/json");
+            var resp = HttpClient.PostAsync(LOGIN_ENDPOINT, content).Result;
+            EnsureSuccessfulResponse(resp);
+        }
+
+        private void SetAuthCookiesForRequest(string requestRelativeUrl)
+        {
+            var requestCookies = HttpHandler.CookieContainer;
+            requestCookies.Add(new Uri(BaseUrl + requestRelativeUrl), LoginCookies);
+        }
+
+        private void Logout()
+        {
+            HttpClient.DefaultRequestHeaders.Add("X-CSRFToken", LoginCookies["csrftoken"].Value);
+            HttpClient.DefaultRequestHeaders.Add("Referer", HttpClient.BaseAddress.OriginalString);
+            SetAuthCookiesForRequest(LOGOUT_ENDPOINT);
+            var resp = HttpClient.PostAsync(LOGOUT_ENDPOINT, null).Result;
+            EnsureSuccessfulResponse(resp);
         }
 
         public async Task<List<SSLKeyAndCertificate>> GetAllCertificates(string certType, int pageSize)
@@ -84,30 +125,39 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 
         private async Task<GetCertificateResponse> GetCertificatesPage(string certType, int pageSize, int page)
         {
-            return await GetResponseAsync<GetCertificateResponse>(await _httpClient.GetAsync(ENDPOINT + $"?type={certType}&page={page}&page_size={pageSize}"));
+            string requestEndpoint = CERT_ENDPOINT + $"?type={certType}&page={page}&page_size={pageSize}";
+            SetAuthCookiesForRequest(requestEndpoint);
+            return await GetResponseAsync<GetCertificateResponse>(await HttpClient.GetAsync(requestEndpoint));
         }
 
         public async Task<SSLKeyAndCertificate> GetCertificateByName(string name)
         {
-            GetCertificateResponse response = await GetResponseAsync<GetCertificateResponse>(await _httpClient.GetAsync(ENDPOINT + $"?name={name}"));
+            string requestEndpoint = CERT_ENDPOINT + $"?name={name}";
+            SetAuthCookiesForRequest(requestEndpoint);
+            GetCertificateResponse response = await GetResponseAsync<GetCertificateResponse>(await HttpClient.GetAsync(requestEndpoint));
             return response.results.Single();
         }
 
         public async Task<SSLKeyAndCertificate> AddCertificate(SSLKeyAndCertificate certToImport)
         {
             StringContent content = new StringContent(JsonConvert.SerializeObject(certToImport, serializerSettings), Encoding.UTF8, "application/json");
-            return await GetResponseAsync<SSLKeyAndCertificate>(await _httpClient.PostAsync(ENDPOINT, content));
+            SetAuthCookiesForRequest(CERT_ENDPOINT);
+            return await GetResponseAsync<SSLKeyAndCertificate>(await HttpClient.PostAsync(CERT_ENDPOINT, content));
         }
 
         public async Task<SSLKeyAndCertificate> UpdateCertificate(string uuid, SSLKeyAndCertificate certUpdate)
         {
             StringContent content = new StringContent(JsonConvert.SerializeObject(certUpdate, serializerSettings), Encoding.UTF8, "application/json");
-            return await GetResponseAsync<SSLKeyAndCertificate>(await _httpClient.PutAsync(string.Join("/", ENDPOINT, uuid), content));
+            string requestEndpoint = string.Join("/", CERT_ENDPOINT, uuid);
+            SetAuthCookiesForRequest(requestEndpoint);
+            return await GetResponseAsync<SSLKeyAndCertificate>(await HttpClient.PutAsync(requestEndpoint, content));
         }
 
         public async Task<bool> DeleteCertificate(string uuid)
         {
-            HttpResponseMessage response = await _httpClient.DeleteAsync(string.Join("/", ENDPOINT, uuid));
+            string requestEndpoint = string.Join("/", CERT_ENDPOINT, uuid);
+            SetAuthCookiesForRequest(requestEndpoint);
+            HttpResponseMessage response = await HttpClient.DeleteAsync(requestEndpoint);
             EnsureSuccessfulResponse(response);
             return true;
         }
@@ -125,6 +175,23 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             {
                 string error = new StreamReader(response.Content.ReadAsStreamAsync().Result).ReadToEnd();
                 throw new Exception($"Request to VMware NSX ALB was not successful - {response.StatusCode} - {error}");
+            }
+        }
+
+        public void Dispose()
+        {
+            try
+            {
+                Logout();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Logout Failed", ex);
+            }
+            finally
+            {
+                HttpClient.Dispose();
+                HttpHandler.Dispose();
             }
         }
     }
