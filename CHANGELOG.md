@@ -10,3 +10,4 @@
 2.0.0
 - Initial release of the Universal Orchestrator capability
 - Replaces the original Windows Orchestrator capability in `avi-vantage-windowsorchestrator`
+
