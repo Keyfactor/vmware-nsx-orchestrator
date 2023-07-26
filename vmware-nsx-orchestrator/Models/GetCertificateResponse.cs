@@ -16,7 +16,7 @@ using System.Collections.Generic;
 
 namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models
 {
-    public class ApiResponse
+    public class GetCertificateResponse
     {
         public int count;
         public List<SSLKeyAndCertificate> results;
