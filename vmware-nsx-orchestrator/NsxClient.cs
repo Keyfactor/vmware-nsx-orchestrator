@@ -111,7 +111,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
         {
             List<SSLKeyAndCertificate> allCerts = new List<SSLKeyAndCertificate>();
             GetCertificateResponse response;
-            int page = 0;
+            int page = 1;
             do
             {
                 response = await GetCertificatesPage(certType, pageSize, page);
