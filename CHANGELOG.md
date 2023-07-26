@@ -1,3 +1,9 @@
+2.1.0
+- Add PAM support for Server Username and Password
+- Allow X-Avi-Version to be set on each Certificate Store to allow for use with older API Versions
+- Page Inventory results to allow for larger Inventory results
+- Use Session Authentication instead of Basic Authentication
+
 2.0.1
 - Fixes a bug in the renewal overwrite process that would fail after overwriting the existing certificate by attempting to add the certificate again
 
