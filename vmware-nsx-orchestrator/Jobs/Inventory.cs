@@ -23,7 +23,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 {
     public class Inventory : NsxJob, IInventoryJobExtension
     {
-        private const int PAGE_SIZE = 1;
+        private const int PAGE_SIZE = 10;
 
         public Inventory(IPAMSecretResolver pam)
         {
