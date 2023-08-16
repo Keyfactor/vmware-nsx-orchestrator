@@ -1,3 +1,6 @@
+2.1.1
+- Fix CSRF token usage for token auth
+
 2.1.0
 - Add PAM support for Server Username and Password
 - Allow X-Avi-Version to be set on each Certificate Store to allow for use with older API Versions

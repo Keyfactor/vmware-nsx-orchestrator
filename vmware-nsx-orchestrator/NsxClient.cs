@@ -79,6 +79,9 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             // check cookies after login
             Uri loginUri = new Uri(BaseUrl + LOGIN_ENDPOINT);
             LoginCookies = cookies.GetCookies(loginUri);
+
+            HttpClient.DefaultRequestHeaders.Add("X-CSRFToken", LoginCookies["csrftoken"].Value);
+            HttpClient.DefaultRequestHeaders.Add("Referer", HttpClient.BaseAddress.OriginalString);
         }
 
         private void Login(string username, string password)
@@ -100,8 +103,6 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 
         private void Logout()
         {
-            HttpClient.DefaultRequestHeaders.Add("X-CSRFToken", LoginCookies["csrftoken"].Value);
-            HttpClient.DefaultRequestHeaders.Add("Referer", HttpClient.BaseAddress.OriginalString);
             SetAuthCookiesForRequest(LOGOUT_ENDPOINT);
             var resp = HttpClient.PostAsync(LOGOUT_ENDPOINT, null).Result;
             EnsureSuccessfulResponse(resp);
