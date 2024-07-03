@@ -1,33 +1,15 @@
 {
-    "$schema": "/Users/hroszell/coding/dev/staff-tools/keyfactor.github.io/v2/integration-manifest-schema.json",
+    "$schema": "https://keyfactor.github.io/v2/integration-manifest-schema.json",
     "integration_type": "orchestrator",
     "name": "VMware NSX Advanced Load Balancer (Avi)",
     "status": "production",
     "link_github": true,
     "update_catalog": true,
     "support_level": "kf-supported",
-    "description": "The VMware NSX Advanced Load Balancer (formerly Avi Vantage) Orchestrator allows for the management of certificates stored in the VMware NSX ALB solution. Application, System, and CA cert types are supported. Inventory, Management, and Renewal functions are supported.",
+    "description": "The VMware NSX ALB Universal Orchestrator extension enables remote management and automation of cryptographic certificates within VMware NSX ALB environments through Keyfactor Command.",
     "about": {
         "orchestrator": {
             "pam_support": true,
-            "win": {
-                "supportsCreateStore": false,
-                "supportsDiscovery": false,
-                "supportsManagementAdd": true,
-                "supportsManagementRemove": true,
-                "supportsReenrollment": false,
-                "supportsInventory": true,
-                "platformSupport": "Unused"
-            },
-            "linux": {
-                "supportsCreateStore": false,
-                "supportsDiscovery": false,
-                "supportsManagementAdd": true,
-                "supportsManagementRemove": true,
-                "supportsReenrollment": false,
-                "supportsInventory": true,
-                "platformSupport": "Unused"
-            },
             "store_types": [
                 {
                     "Name": "VMware-NSX",
@@ -56,8 +38,8 @@
                     "PowerShell": false,
                     "BlueprintAllowed": false,
                     "CustomAliasAllowed": "Required",
-                    "ClientMachineDescription": "For the Client Machine field, enter the URL of the NSX ALB instance, optionally prefixed with the tenant name in brackets if managing a specific tenant. For example: [tenant-name]https://my.nsx.url/.",
-                    "StorePathDescription": "For the Store Path field, enter the type of certificate to manage, such as 'Application' for application certificates or 'CA' for CA certificates. For example: Application."
+                    "ClientMachineDescription": "The URL of the NSX ALB instance, optionally prefixed with the tenant name in brackets if a specific tenant should be used, for example, [tenant-name]https://my.nsx.url/.",
+                    "StorePathDescription": "The type of certificate being managed, such as 'Application' for SSL offloading certificates, 'CA' for Certificate Authority certificates, or 'Controller' for controller certificates."
                 }
             ]
         }

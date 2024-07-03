@@ -138,8 +138,8 @@ The following table describes the required and optional fields for the `VMware-N
 | --------- | ----------- | ------------------------- |
 | Category | Select "VMware-NSX" or the customized certificate store name from the previous step. | |
 | Container | Optional container to associate certificate store with. | |
-| Client Machine | For the Client Machine field, enter the URL of the NSX ALB instance, optionally prefixed with the tenant name in brackets if managing a specific tenant. For example: [tenant-name]https://my.nsx.url/. | |
-| Store Path | For the Store Path field, enter the type of certificate to manage, such as 'Application' for application certificates or 'CA' for CA certificates. For example: Application. | |
+| Client Machine | The URL of the NSX ALB instance, optionally prefixed with the tenant name in brackets if a specific tenant should be used, for example, [tenant-name]https://my.nsx.url/. | |
+| Store Path | The type of certificate being managed, such as 'Application' for SSL offloading certificates, 'CA' for Certificate Authority certificates, or 'Controller' for controller certificates. | |
 | Orchestrator | Select an approved orchestrator capable of managing `VMware-NSX` certificates. Specifically, one with the `VMware-NSX` capability. | |
 
 * **Using kfutil**
