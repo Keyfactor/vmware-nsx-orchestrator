@@ -16,6 +16,7 @@ using Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Extensions;
 using Keyfactor.Orchestrators.Extensions.Interfaces;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 
@@ -23,7 +24,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 {
     public class Inventory : NsxJob, IInventoryJobExtension
     {
-        private const int PAGE_SIZE = 10;
+        private const int PAGE_SIZE = 2;
 
         public Inventory(IPAMSecretResolver pam)
         {
@@ -39,9 +40,9 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
             List<SSLKeyAndCertificate> allCerts;
             List<CurrentInventoryItem> inventory = new List<CurrentInventoryItem>();
 
+            string certType = GetCertType(config.CertificateStoreDetails.StorePath);
             try
             {
-                string certType = GetCertType(config.CertificateStoreDetails.StorePath);
                 allCerts = Client.GetAllCertificates(certType, PAGE_SIZE).Result;
             }
             catch (Exception ex)
@@ -49,8 +50,11 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
                 return ThrowError(ex, "Certificate Retrieval");
             }
 
+            _logger.LogDebug($"Total certificates found of type {certType} - {allCerts.Count}");
+
             foreach(var foundCert in allCerts)
             {
+                _logger.LogTrace($"Found Certificate - {foundCert.name}");
                 inventory.Add(new CurrentInventoryItem()
                 {
                     Alias = foundCert.name,

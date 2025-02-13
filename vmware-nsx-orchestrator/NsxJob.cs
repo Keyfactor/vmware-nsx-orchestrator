@@ -30,7 +30,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 {
     public abstract class NsxJob : IOrchestratorJobExtension
     {
-        private protected ILogger _logger;
+        internal ILogger _logger;
         private long _jobHistoryId;
         private string _apiVersion;
         private protected IPAMSecretResolver _pam;
@@ -123,11 +123,13 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             {
                 string username = ResolvePamField(_pam, config.ServerUsername, "Server Username");
                 string password = ResolvePamField(_pam, config.ServerPassword, "Server Password");
-                Client = new NsxClient(clientMachine, username, password, tenant, _apiVersion);
+                Client = new NsxClient(_logger, clientMachine, username, password, tenant, _apiVersion);
             }
             catch (Exception ex)
             {
                 ThrowError(ex, "Initialization");
+                _logger.LogError("Error during initialization, cannot return proper Error job result. Re-throwing exception.");
+                throw;
             }
             _logger.LogTrace($"Configuration complete for {ExtensionName}.");
         }
