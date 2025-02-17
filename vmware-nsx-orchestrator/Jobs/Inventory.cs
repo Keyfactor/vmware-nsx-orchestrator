@@ -60,8 +60,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
                     Alias = foundCert.name,
                     Certificates = new string[] { foundCert.certificate.certificate }, // need to check base64 status
                     PrivateKeyEntry = !string.IsNullOrEmpty(foundCert.key),
-                    UseChainLevel = false,
-                    ItemStatus = Orchestrators.Common.Enums.OrchestratorInventoryItemStatus.Unknown
+                    UseChainLevel = false
                 });
             }
 

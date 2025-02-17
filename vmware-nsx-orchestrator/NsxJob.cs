@@ -62,7 +62,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
                 X509Certificate2 x509 = new X509Certificate2(certBytes, password);
                 PrivateKeyConverter pkey = PrivateKeyConverterFactory.FromPKCS12(certBytes, password);
 
-                nsxCert.certificate.certificate = $"-----BEGIN CERTIFICATE-----\n{Convert.ToBase64String(x509.RawData)}\n-----END CERTIFICATE-----";
+                nsxCert.certificate.certificate = $"-----BEGIN CERTIFICATE-----\n{Convert.ToBase64String(x509.RawData, Base64FormattingOptions.InsertLineBreaks)}\n-----END CERTIFICATE-----";
 
                 // check type of key
                 string keyType;
