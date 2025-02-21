@@ -1,3 +1,8 @@
+2.1.2
+- correctly format certs sent in Management job to prevent Inventory errors later
+- no longer setting Inventory status to "Unknown"
+- catch and log errors that occur during Login process
+
 2.1.1
 - Fix CSRF token usage for token auth
 
