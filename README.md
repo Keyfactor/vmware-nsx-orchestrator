@@ -63,6 +63,7 @@ For multiple certificate types on the same NSX instance, create a certificate st
 
 Example:
 | Certs to target | Client Machine | Store Path |
+| - | - | - |
 | CA certs in user's default configured tenant | https://my.nsx.url/ | CA |
 | Application certs in tenant "Operations" | [Operations]https://my.nsx.url/ | Application |
 | System certs in tenant "IT" | [IT]https://my.nsx.url/ | System |
