@@ -1,33 +1,19 @@
 {
-  "$schema": "https://keyfactor.github.io/integration-manifest-schema.json",
+  "$schema": "https://keyfactor.github.io/v2/integration-manifest-schema.json",
   "integration_type": "orchestrator",
   "name": "VMware NSX Advanced Load Balancer (Avi)",
   "status": "production",
   "link_github": true,
   "update_catalog": true,
   "support_level": "kf-supported",
+  "release_projet": "vmware-nsx-orchestrator/vmware-nsx-orchestrator.csproj",
+  "release_dir": "vmware-nsx-orchestrator/bin/Release",
   "description": "The VMware NSX Advanced Load Balancer (formerly Avi Vantage) Orchestrator allows for the management of certificates stored in the VMware NSX ALB solution. Application, System, and CA cert types are supported. Inventory, Management, and Renewal functions are supported.",
   "about": {
     "orchestrator": {
+      "UOFramework": "10.1",
       "pam_support": true,
-      "win": {
-        "supportsCreateStore": false,
-        "supportsDiscovery": false,
-        "supportsManagementAdd": true,
-        "supportsManagementRemove": true,
-        "supportsReenrollment": false,
-        "supportsInventory": true,
-        "platformSupport": "Unused"
-      },
-      "linux": {
-        "supportsCreateStore": false,
-        "supportsDiscovery": false,
-        "supportsManagementAdd": true,
-        "supportsManagementRemove": true,
-        "supportsReenrollment": false,
-        "supportsInventory": true,
-        "platformSupport": "Unused"
-      },
+      "keyfactor_platform_version": "10.1",
       "store_types": [
         {
           "Name": "VMware-NSX",
@@ -47,16 +33,20 @@
               "DisplayName": "Server Username",
               "Type": "Secret",
               "DependsOn": "",
-              "DefaultValue": null,
-              "Required": true
+              "DefaultValue": "",
+              "Required": true,
+              "IsPAMEligible": true,
+              "Description": "The username of the user to log on as in VMware NSX ALB."
             },
             {
               "Name": "ServerPassword",
               "DisplayName": "Server Password",
               "Type": "Secret",
               "DependsOn": "",
-              "DefaultValue": null,
-              "Required": true
+              "DefaultValue": "",
+              "Required": true,
+              "IsPAMEligible": true,
+              "Description": "The password of the user to log on as in VMware NSX ALB."
             },
             {
               "Name": "ServerUseSsl",
@@ -72,7 +62,9 @@
               "Type": "String",
               "DependsOn": "",
               "DefaultValue": "20.1.1",
-              "Required": true
+              "Required": true,
+              "IsPAMEligible": false,
+              "Description": "The API Version of Avi / NSX to target. A default is set for the version this was originally developed and tested against."
             }
           ],
           "EntryParameters": null,
@@ -88,7 +80,9 @@
           "ServerRequired": true,
           "PowerShell": false,
           "BlueprintAllowed": false,
-          "CustomAliasAllowed": "Required"
+          "CustomAliasAllowed": "Required",
+          "ClientMachineDescription": "This is the URL for the VMware NSX instance. It also includes an optional tenant in square brackets before the URL. A tenant value is required when the certificates being managed are in a different tenant from the default tenant set for the NSX User specified for the store. This should look like either: [optional-tenant-name]https://my.nsx.url/ OR https://my.nsx.url/ ",
+          "StorePathDescription": "A selection from the different certificate types supported: Application, Controller, or CA."
         }
       ]
     }
