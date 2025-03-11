@@ -49,14 +49,6 @@
               "Description": "The password of the user to log on as in VMware NSX ALB."
             },
             {
-              "Name": "ServerUseSsl",
-              "DisplayName": "Use SSL",
-              "Type": "Bool",
-              "DependsOn": "",
-              "DefaultValue": "true",
-              "Required": true
-            },
-            {
               "Name": "ApiVersion",
               "DisplayName": "X-Avi-Version",
               "Type": "String",
