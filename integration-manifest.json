@@ -59,7 +59,7 @@
               "Description": "The API Version of Avi / NSX to target. A default is set for the version this was originally developed and tested against."
             }
           ],
-          "EntryParameters": null,
+          "EntryParameters": [],
           "PasswordOptions": {
             "EntrySupported": false,
             "StoreRequired": false,
