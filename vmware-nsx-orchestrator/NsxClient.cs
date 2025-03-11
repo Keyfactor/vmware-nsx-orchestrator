@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -28,6 +29,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 {
     public class NsxClient : IDisposable
     {
+        private ILogger _logger;
         private HttpClientHandler HttpHandler { get; }
         private HttpClient HttpClient { get; }
         private CookieCollection LoginCookies { get; }
@@ -41,8 +43,9 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             NullValueHandling = NullValueHandling.Ignore
         };
 
-        public NsxClient(string url, string username, string password, string tenant, string apiVersion)
+        public NsxClient(ILogger logger, string url, string username, string password, string tenant, string apiVersion)
         {
+            _logger = logger;
             // declare cookies and handler to be able to access them after Login process
             CookieContainer cookies = new CookieContainer();
             HttpHandler = new HttpClientHandler();
@@ -52,12 +55,19 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 
             string aviVersion = apiVersion ?? "20.1.1";
             HttpClient.DefaultRequestHeaders.Add("X-Avi-Version", aviVersion);
+            _logger.LogDebug($"Using X-Avi-Version {aviVersion}");
             if (tenant != null)
             {
                 HttpClient.DefaultRequestHeaders.Add("X-Avi-Tenant", tenant);
+                _logger.LogDebug($"Using X-Avi-Tenant {tenant}");
             }
-            
+            else
+            {
+                _logger.LogDebug($"Not using any X-Avi-Tenant. Default tenant for the user will be used.");
+            }
+
             // ensure base url ends as expected
+            _logger.LogTrace($"Passed in URL is {url} - this will be processed to conform to URL expectation...");
             if (!url.EndsWith("/"))
             {
                 url += "/";
@@ -66,6 +76,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             {
                 url = url.Substring(0, url.Length - 4); // remove "api/" from end of base url
             }
+            _logger.LogTrace($"Final proccessed Base URL is {url}");
             BaseUrl = url;
             HttpClient.BaseAddress = new Uri(BaseUrl);
 
@@ -86,12 +97,14 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 
         private void Login(string username, string password)
         {
+            _logger.LogTrace("Beginning initial Login");
             dynamic loginBody = new {
                 username = username,
                 password = password
             };
             StringContent content = new StringContent(JsonConvert.SerializeObject(loginBody), Encoding.UTF8, "application/json");
             var resp = HttpClient.PostAsync(LOGIN_ENDPOINT, content).Result;
+            _logger.LogTrace("Posted Login request. Reading response.");
             EnsureSuccessfulResponse(resp);
         }
 
@@ -174,6 +187,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
         {
             if (!response.IsSuccessStatusCode)
             {
+                _logger.LogError($"HTTP Response indicated an error. Status Code: {response.StatusCode} - Reason: {response.ReasonPhrase}");
                 string error = new StreamReader(response.Content.ReadAsStreamAsync().Result).ReadToEnd();
                 throw new Exception($"Request to VMware NSX ALB was not successful - {response.StatusCode} - {error}");
             }
