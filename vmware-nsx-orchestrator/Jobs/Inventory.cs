@@ -70,6 +70,8 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
                 }
                 catch (Exception ex)
                 {
+                    // it failed; log a warning and continue.
+
                     _logger.LogWarning("Unable to perform PEM to DER conversion on cert contents.");
                     _logger.LogWarning("cert contents:");
                     _logger.LogWarning($"\n{foundCert.certificate.certificate}");
