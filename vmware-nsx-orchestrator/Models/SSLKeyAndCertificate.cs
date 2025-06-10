@@ -35,6 +35,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models
 
     public class SSLCertificate
     {
+        // PEM encoded certificate string
         public string certificate;
         public string not_after;
         public SSLCertificateDescription subject;
