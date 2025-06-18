@@ -1,3 +1,7 @@
+2.1.3
+- Added code to mitigate problem with older versions of the UO framework throwing an exception when bag attributes are included in the PEM data.
+- Inventory jobs will now continue if an individual cert is badly formatted and log the details.
+
 2.1.2
 - correctly format certs sent in Management job to prevent Inventory errors later
 - no longer setting Inventory status to "Unknown"

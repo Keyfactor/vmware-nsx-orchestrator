@@ -37,7 +37,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
         private protected NsxClient Client { get; set; }
 
         public string ExtensionName => "VMware-NSX";
-
+                
         private protected SSLKeyAndCertificate ConvertToNsxCertificate(string certType, string base64cert, string password)
         {
             SSLKeyAndCertificate nsxCert = new SSLKeyAndCertificate()
@@ -70,6 +70,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
                 {
                     keyType = keyAlg != null ? "RSA" : "EC";
                 }
+                
                 nsxCert.key = $"-----BEGIN {keyType} PRIVATE KEY-----\n{Convert.ToBase64String(pkey.ToPkcs8BlobUnencrypted())}\n-----END {keyType} PRIVATE KEY-----";
                 nsxCert.key_base64 = false;
                 nsxCert.key_passphrase = password;
@@ -145,7 +146,8 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             return new JobResult()
             {
                 Result = OrchestratorJobStatusJobResult.Success,
-                JobHistoryId = _jobHistoryId
+                JobHistoryId = _jobHistoryId,
+                FailureMessage = message                
             };
         }
 
