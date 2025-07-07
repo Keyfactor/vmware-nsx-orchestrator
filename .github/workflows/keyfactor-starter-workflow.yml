@@ -26,4 +26,3 @@ jobs:
       entra_password: ${{ secrets.DOCTOOL_ENTRA_PASSWD }}
       command_client_id: ${{ secrets.DOCTOOL_COMMAND_CLIENT_ID }}
       command_client_secret: ${{ secrets.DOCTOOL_COMMAND_CLIENT_SECRET }}
-      
