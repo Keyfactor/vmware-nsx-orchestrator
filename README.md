@@ -239,8 +239,8 @@ the Keyfactor Command Portal
 
     Click the Add button to add a new Certificate Store. Use the table below to populate the **Attributes** in the **Add** form.
 
-   | Attribute | Description |
-   | --------- | ----------- |
+   | Attribute | Description                                             |
+   | --------- |---------------------------------------------------------|
    | Category | Select "VMware-NSX" or the customized certificate store name from the previous step. |
    | Container | Optional container to associate certificate store with. |
    | Client Machine | This is the URL for the VMware NSX instance. It also includes an optional tenant in square brackets before the URL. A tenant value is required when the certificates being managed are in a different tenant from the default tenant set for the NSX User specified for the store. This should look like either: [optional-tenant-name]https://my.nsx.url/ OR https://my.nsx.url/  |
