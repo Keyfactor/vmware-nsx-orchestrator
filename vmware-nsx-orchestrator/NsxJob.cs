@@ -1,16 +1,10 @@
-﻿// Copyright 2023 Keyfactor
-// 
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-// 
-//     http://www.apache.org/licenses/LICENSE-2.0
-// 
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+﻿
+//  Copyright 2025 Keyfactor
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+//  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+//  and limitations under the License.
 
 using Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models;
 using Keyfactor.Logging;
@@ -37,7 +31,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
         private protected NsxClient Client { get; set; }
 
         public string ExtensionName => "VMware-NSX";
-
+                
         private protected SSLKeyAndCertificate ConvertToNsxCertificate(string certType, string base64cert, string password)
         {
             SSLKeyAndCertificate nsxCert = new SSLKeyAndCertificate()
@@ -70,6 +64,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
                 {
                     keyType = keyAlg != null ? "RSA" : "EC";
                 }
+                
                 nsxCert.key = $"-----BEGIN {keyType} PRIVATE KEY-----\n{Convert.ToBase64String(pkey.ToPkcs8BlobUnencrypted())}\n-----END {keyType} PRIVATE KEY-----";
                 nsxCert.key_base64 = false;
                 nsxCert.key_passphrase = password;
@@ -145,7 +140,8 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             return new JobResult()
             {
                 Result = OrchestratorJobStatusJobResult.Success,
-                JobHistoryId = _jobHistoryId
+                JobHistoryId = _jobHistoryId,
+                FailureMessage = message                
             };
         }
 
