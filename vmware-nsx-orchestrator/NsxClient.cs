@@ -8,7 +8,6 @@
 
 using Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,6 +16,8 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Security;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
@@ -32,9 +33,12 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
         private const string LOGIN_ENDPOINT = "login";
         private const string LOGOUT_ENDPOINT = "logout";
         private const string CERT_ENDPOINT = "api/sslkeyandcertificate";
-        private readonly JsonSerializerSettings serializerSettings = new JsonSerializerSettings()
+        // IncludeFields is required because the NSX ALB model classes expose plain public
+        // fields (matching the API's JSON keys directly) rather than properties.
+        private readonly JsonSerializerOptions serializerOptions = new JsonSerializerOptions()
         {
-            NullValueHandling = NullValueHandling.Ignore
+            IncludeFields = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
         public NsxClient(ILogger logger, string url, string username, string password, string tenant, string apiVersion)
@@ -92,11 +96,12 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
         private void Login(string username, string password)
         {
             _logger.LogTrace("Beginning initial Login");
-            dynamic loginBody = new {
+            var loginBody = new
+            {
                 username = username,
                 password = password
             };
-            StringContent content = new StringContent(JsonConvert.SerializeObject(loginBody), Encoding.UTF8, "application/json");
+            StringContent content = new StringContent(JsonSerializer.Serialize(loginBody), Encoding.UTF8, "application/json");
             var resp = HttpClient.PostAsync(LOGIN_ENDPOINT, content).Result;
             _logger.LogTrace("Posted Login request. Reading response.");
             EnsureSuccessfulResponse(resp);
@@ -148,14 +153,14 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 
         public async Task<SSLKeyAndCertificate> AddCertificate(SSLKeyAndCertificate certToImport)
         {
-            StringContent content = new StringContent(JsonConvert.SerializeObject(certToImport, serializerSettings), Encoding.UTF8, "application/json");
+            StringContent content = new StringContent(JsonSerializer.Serialize(certToImport, serializerOptions), Encoding.UTF8, "application/json");
             SetAuthCookiesForRequest(CERT_ENDPOINT);
             return await GetResponseAsync<SSLKeyAndCertificate>(await HttpClient.PostAsync(CERT_ENDPOINT, content));
         }
 
         public async Task<SSLKeyAndCertificate> UpdateCertificate(string uuid, SSLKeyAndCertificate certUpdate)
         {
-            StringContent content = new StringContent(JsonConvert.SerializeObject(certUpdate, serializerSettings), Encoding.UTF8, "application/json");
+            StringContent content = new StringContent(JsonSerializer.Serialize(certUpdate, serializerOptions), Encoding.UTF8, "application/json");
             string requestEndpoint = string.Join("/", CERT_ENDPOINT, uuid);
             SetAuthCookiesForRequest(requestEndpoint);
             return await GetResponseAsync<SSLKeyAndCertificate>(await HttpClient.PutAsync(requestEndpoint, content));
@@ -174,7 +179,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
         {
             EnsureSuccessfulResponse(response);
             string stringResponse = new StreamReader(await response.Content.ReadAsStreamAsync()).ReadToEnd();
-            return JsonConvert.DeserializeObject<T>(stringResponse);
+            return JsonSerializer.Deserialize<T>(stringResponse, serializerOptions);
         }
 
         private void EnsureSuccessfulResponse(HttpResponseMessage response)

@@ -16,7 +16,7 @@ using System;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using NsxConstants = Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models.Constants;
-using Newtonsoft.Json;
+using System.Text.Json;
 using System.Collections.Generic;
 using Keyfactor.Orchestrators.Extensions.Interfaces;
 
@@ -111,7 +111,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             _jobHistoryId = config.JobHistoryId;
 
             // check if store properties has an Api Version set
-            var storeProps = JsonConvert.DeserializeObject<Dictionary<string, string>>(store.Properties);
+            var storeProps = JsonSerializer.Deserialize<Dictionary<string, string>>(store.Properties);
             _apiVersion = storeProps.GetValueOrDefault("ApiVersion");
 
             try
@@ -127,6 +127,20 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
                 throw;
             }
             _logger.LogTrace($"Configuration complete for {ExtensionName}.");
+        }
+
+        private protected void DisposeClient()
+        {
+            try
+            {
+                Client?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                // Client's HttpClient/HttpHandler are always released inside Dispose() before this could be thrown;
+                // this only means the NSX ALB logout call itself failed, so just log it rather than masking the job result.
+                _logger.LogWarning($"Failed to log out of NSX ALB session: {FlattenException(ex)}");
+            }
         }
 
         private string ResolvePamField(IPAMSecretResolver pam, string key, string fieldName)
