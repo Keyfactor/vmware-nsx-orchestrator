@@ -1,3 +1,7 @@
+2.1.4
+- Added call to logout endpoint after job completes in order to free up the session and prevent race conditions.
+- Added unit tests
+
 2.1.3
 - Added code to mitigate problem with older versions of the UO framework throwing an exception when bag attributes are included in the PEM data.
 - Inventory jobs will now continue if an individual cert is badly formatted and log the details.

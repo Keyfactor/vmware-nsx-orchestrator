@@ -127,6 +127,8 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
                 throw;
             }
             _logger.LogTrace($"Configuration complete for {ExtensionName}.");
+            _logger.LogTrace($"clientMachine: {clientMachine}");
+            _logger.LogTrace($"tenant: {tenant}");
         }
 
         private protected void DisposeClient()
