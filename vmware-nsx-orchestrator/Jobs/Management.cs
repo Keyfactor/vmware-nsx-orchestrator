@@ -31,20 +31,27 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
 
             Initialize(clientMachine, config, config.CertificateStoreDetails, tenant);
 
-            switch (config.OperationType)
+            try
             {
-                case CertStoreOperationType.Add:
-                    string certType = GetCertType(config.CertificateStoreDetails.StorePath);
-                    return AddCertificateAsync(config.JobCertificate, config.Overwrite, certType).Result;
-                case CertStoreOperationType.Remove:
-                    return DeleteCertificateAsync(config.JobCertificate.Alias).Result;
-                default:
-                    return new JobResult()
-                    {
-                        Result = OrchestratorJobStatusJobResult.Failure,
-                        FailureMessage = "Invalid Management Option",
-                        JobHistoryId = config.JobHistoryId
-                    };
+                switch (config.OperationType)
+                {
+                    case CertStoreOperationType.Add:
+                        string certType = GetCertType(config.CertificateStoreDetails.StorePath);
+                        return AddCertificateAsync(config.JobCertificate, config.Overwrite, certType).Result;
+                    case CertStoreOperationType.Remove:
+                        return DeleteCertificateAsync(config.JobCertificate.Alias).Result;
+                    default:
+                        return new JobResult()
+                        {
+                            Result = OrchestratorJobStatusJobResult.Failure,
+                            FailureMessage = "Invalid Management Option",
+                            JobHistoryId = config.JobHistoryId
+                        };
+                }
+            }
+            finally
+            {
+                DisposeClient();
             }
         }
 
