@@ -1,4 +1,4 @@
-﻿
+
 //  Copyright 2025 Keyfactor
 //  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -34,84 +34,100 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
             string clientMachine = ParseClientMachineUrl(config.CertificateStoreDetails.ClientMachine, out string tenant);
 
             Initialize(clientMachine, config, config.CertificateStoreDetails, tenant);
-            List<SSLKeyAndCertificate> allCerts;
-            List<CurrentInventoryItem> inventory = new List<CurrentInventoryItem>();
-
-            string certType = GetCertType(config.CertificateStoreDetails.StorePath);
             try
             {
-                allCerts = Client.GetAllCertificates(certType, PAGE_SIZE).Result;
-            }
-            catch (Exception ex)
-            {
-                return ThrowError(ex, "Certificate Retrieval");
-            }
+                List<SSLKeyAndCertificate> allCerts;
+                List<CurrentInventoryItem> inventory = new List<CurrentInventoryItem>();
 
-            _logger.LogDebug($"Total certificates found of type {certType} - {allCerts.Count}");
-            var warningCount = 0;
-
-            foreach (var foundCert in allCerts)
-            {
-                _logger.LogTrace($"Found Certificate - {foundCert.name}");
-
-                // the below check is in place to prevent an error on older versions of the UO framework
-                // when parsing PEM data with extra text before wrapper tags.  
-
-                #region checkPEMformat
-
+                string certType = GetCertType(config.CertificateStoreDetails.StorePath);
                 try
                 {
-                    // try pemtoder
-                    var test = PKI.PEM.PemUtilities.PEMToDER(foundCert.certificate.certificate);
+                    allCerts = Client.GetAllCertificates(certType, PAGE_SIZE).Result;
                 }
                 catch (Exception ex)
                 {
-                    // it failed, attempt cleanup.
-
-                    _logger.LogWarning("Unable to perform PEM to DER conversion on cert contents.");
-
-                    // try cleanup up extra info
-
-                    var cleanPEM = CleanPEMString(foundCert.certificate.certificate);
-
-                    try
-                    {
-                        var test = PKI.PEM.PemUtilities.PEMToDER(cleanPEM);
-                        // success if no exception.
-
-                        inventory.Add(new CurrentInventoryItem()
-                        {
-                            Alias = foundCert.name,
-                            Certificates = new string[] { cleanPEM },
-                            PrivateKeyEntry = !string.IsNullOrEmpty(foundCert.key),
-                            UseChainLevel = false
-                        });
-
-                        continue;
-                    }
-                    catch
-                    {
-                        _logger.LogWarning($"still failing to parse, skipping this one ({foundCert.name}) and continuing with inventory.");
-                        warningCount++;
-                        continue;
-                    }
+                    return ThrowError(ex, "Certificate Retrieval");
                 }
 
-                #endregion
+                _logger.LogDebug($"Total certificates found of type {certType} - {allCerts.Count}");
+                var warningCount = 0;
 
-                inventory.Add(new CurrentInventoryItem()
+                foreach (var foundCert in allCerts)
                 {
-                    Alias = foundCert.name,
-                    Certificates = new string[] { foundCert.certificate.certificate },
-                    PrivateKeyEntry = !string.IsNullOrEmpty(foundCert.key),
-                    UseChainLevel = false
-                });
-            }
+                    _logger.LogTrace($"Found Certificate - {foundCert.name}");
 
-            var successMessage = $"Successfully processed {inventory.Count} certificates. ";
-            if (warningCount > 0) successMessage += $"\n{warningCount} certificate(s) could not be processed.\nReview the logs on the orchestrator for more details.";
-            if (submitInventory.Invoke(inventory)) return Success(successMessage);
-            return ThrowError(new Exception("Inventory Job Failed.  Review the orchestrator logs for more details."), "Inventory");
+                    // the below check is in place to prevent an error on older versions of the UO framework
+                    // when parsing PEM data with extra text before wrapper tags.
+
+                    #region checkPEMformat
+                    var certString = foundCert.certificate?.certificate;
+                    try
+                    {
+
+                        // if the contents are empty; log and continue
+                        if (string.IsNullOrEmpty(certString))
+                        {
+                            _logger.LogWarning($"the contents of {foundCert.name} are empty.  The status returned is: {foundCert.status}");
+                            warningCount++;
+                        }
+
+                        // try pemtoder
+
+                        var test = PKI.PEM.PemUtilities.PEMToDER(certString);
+                    }
+                    catch (Exception ex)
+                    {
+                        // it failed, attempt cleanup.
+
+                        _logger.LogWarning("Unable to perform PEM to DER conversion on cert contents.");
+
+                        // try cleanup up extra info
+
+                        var cleanPEM = CleanPEMString(foundCert.certificate?.certificate);
+
+                        try
+                        {
+                            var test = PKI.PEM.PemUtilities.PEMToDER(cleanPEM);
+                            // success if no exception.
+
+                            inventory.Add(new CurrentInventoryItem()
+                            {
+                                Alias = foundCert.name,
+                                Certificates = new string[] { cleanPEM },
+                                PrivateKeyEntry = !string.IsNullOrEmpty(foundCert.key),
+                                UseChainLevel = false,
+                            });
+
+                            continue;
+                        }
+                        catch
+                        {
+                            _logger.LogWarning($"still failing to parse, skipping this one ({foundCert.name}) and continuing with inventory.");
+                            warningCount++;
+                            continue;
+                        }
+                    }
+
+                    #endregion
+
+                    inventory.Add(new CurrentInventoryItem()
+                    {
+                        Alias = foundCert.name,
+                        Certificates = new string[] { foundCert.certificate.certificate },
+                        PrivateKeyEntry = !string.IsNullOrEmpty(foundCert.key),
+                        UseChainLevel = false
+                    });
+                }
+
+                var successMessage = $"Successfully processed {inventory.Count} certificates. ";
+                if (warningCount > 0) successMessage += $"\n{warningCount} certificate(s) could not be processed.\nReview the logs on the orchestrator for more details.";
+                if (submitInventory.Invoke(inventory)) return Success(successMessage);
+                return ThrowError(new Exception("Inventory Job Failed.  Review the orchestrator logs for more details."), "Inventory");
+            }
+            finally
+            {
+                DisposeClient();
+            }
         }
 
         /// <summary>
@@ -137,6 +153,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Jobs
                 _logger.LogWarning($"\n{dirtyPEM}");
 
                 PemObject po = new PemObject("CERTIFICATE", pemObj.Content);
+
                 _logger.LogTrace("content (without comments): ");
                 var sw = new StringWriter();
                 var pw = new PemWriter(sw);
