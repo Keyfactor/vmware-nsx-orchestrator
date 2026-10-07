@@ -1,5 +1,9 @@
-2.1.4
+2.2.0
 - Added call to logout endpoint after job completes in order to free up the session and prevent race conditions.
+- Added a `RetriesForFailedAuthentication` store parameter to retry login (with capped backoff) when NSX ALB rejects credentials as invalid, since NSX ALB returns the same generic error for an actual bad password and for its external identity provider (e.g. LDAP/AD) being momentarily overwhelmed or unreachable. Defaults to 0 (no retries).
+- Replaced Newtonsoft.Json with System.Text.Json.
+- Pinned Newtonsoft.Json and System.Drawing.Common to patched versions, to avoid shipping vulnerable versions pulled in transitively.
+- Corrected the `net10` target framework moniker to `net10.0`, which was preventing a clean restore.
 - Added unit tests
 
 2.1.3

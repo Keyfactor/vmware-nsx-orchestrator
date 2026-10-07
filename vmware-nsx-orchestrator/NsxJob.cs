@@ -18,15 +18,22 @@ using System.Security.Cryptography.X509Certificates;
 using NsxConstants = Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Models.Constants;
 using System.Text.Json;
 using System.Collections.Generic;
+using System.Threading;
 using Keyfactor.Orchestrators.Extensions.Interfaces;
 
 namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
 {
     public abstract class NsxJob : IOrchestratorJobExtension
     {
+        // Backoff between login retries, doubling each attempt and capped so a long string
+        // of retries can't stall a job for an excessive amount of time.
+        private const int RetryBaseDelayMs = 1000;
+        private const int RetryMaxDelayMs = 5000;
+
         internal ILogger _logger;
         private long _jobHistoryId;
         private string _apiVersion;
+        private int _retriesForFailedAuthentication;
         private protected IPAMSecretResolver _pam;
         private protected NsxClient Client { get; set; }
 
@@ -113,12 +120,26 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             // check if store properties has an Api Version set
             var storeProps = JsonSerializer.Deserialize<Dictionary<string, string>>(store.Properties);
             _apiVersion = storeProps.GetValueOrDefault("ApiVersion");
+            _retriesForFailedAuthentication = ParseRetriesForFailedAuthentication(storeProps.GetValueOrDefault("RetriesForFailedAuthentication"));
 
             try
             {
                 string username = ResolvePamField(_pam, config.ServerUsername, "Server Username");
                 string password = ResolvePamField(_pam, config.ServerPassword, "Server Password");
-                Client = new NsxClient(_logger, clientMachine, username, password, tenant, _apiVersion);
+
+                // NSX ALB can be configured to validate logins against an external identity
+                // provider (e.g. LDAP/AD) rather than its own local user store. When that
+                // provider is momentarily overwhelmed or unreachable, NSX ALB returns the exact
+                // same generic "Invalid credentials" error it would for an actually wrong
+                // password - there's no way to tell the two apart from the response alone. A
+                // short, bounded retry gives that kind of transient identity-provider issue a
+                // chance to clear before we give up and fail the whole job over credentials
+                // that were correct the entire time. RetriesForFailedAuthentication defaults to
+                // 0, so this is a no-op unless an operator explicitly opts in.
+                ExecuteWithRetry(
+                    () => { Client = new NsxClient(_logger, clientMachine, username, password, tenant, _apiVersion); },
+                    _retriesForFailedAuthentication,
+                    (attempt, retryEx) => _logger.LogWarning($"Login to VMware NSX ALB failed (attempt {attempt} of {_retriesForFailedAuthentication + 1}): {FlattenException(retryEx)}. This may be a transient issue with a configured external identity provider; retrying."));
             }
             catch (Exception ex)
             {
@@ -129,6 +150,43 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx
             _logger.LogTrace($"Configuration complete for {ExtensionName}.");
             _logger.LogTrace($"clientMachine: {clientMachine}");
             _logger.LogTrace($"tenant: {tenant}");
+        }
+
+        private static int ParseRetriesForFailedAuthentication(string value)
+        {
+            return int.TryParse(value, out int retries) && retries > 0 ? retries : 0;
+        }
+
+        // Retries action up to maxRetries times on any exception, waiting GetRetryBackoffDelay(attempt)
+        // between attempts. The exception from the final attempt propagates unchanged if every retry
+        // is exhausted. sleep defaults to a real Thread.Sleep; tests supply a fake so backoff delays
+        // don't actually elapse.
+        private protected static void ExecuteWithRetry(Action action, int maxRetries, Action<int, Exception> onRetry = null, Action<TimeSpan> sleep = null)
+        {
+            sleep ??= Thread.Sleep;
+            int attempt = 0;
+            while (true)
+            {
+                try
+                {
+                    action();
+                    return;
+                }
+                catch (Exception ex) when (attempt < maxRetries)
+                {
+                    attempt++;
+                    onRetry?.Invoke(attempt, ex);
+                    sleep(GetRetryBackoffDelay(attempt));
+                }
+            }
+        }
+
+        // Exponential backoff starting at RetryBaseDelayMs and doubling each attempt, capped at
+        // RetryMaxDelayMs so a configured retry count can't stall a job for an excessive amount of time.
+        private protected static TimeSpan GetRetryBackoffDelay(int attemptNumber)
+        {
+            long delayMs = (long)RetryBaseDelayMs << Math.Min(attemptNumber - 1, 10);
+            return TimeSpan.FromMilliseconds(Math.Min(delayMs, RetryMaxDelayMs));
         }
 
         private protected void DisposeClient()

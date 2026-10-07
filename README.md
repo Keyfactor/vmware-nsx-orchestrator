@@ -168,6 +168,7 @@ the Keyfactor Command Portal
    | ServerUsername | Server Username | The username of the user to log on as in VMware NSX ALB. | Secret |  | ✅ Checked |
    | ServerPassword | Server Password | The password of the user to log on as in VMware NSX ALB. | Secret |  | ✅ Checked |
    | ApiVersion | X-Avi-Version | The API Version of Avi / NSX to target. A default is set for the version this was originally developed and tested against. | String | 20.1.1 | ✅ Checked |
+   | RetriesForFailedAuthentication | Retries For Failed Authentication | The number of additional login attempts to make if NSX ALB rejects the configured credentials as invalid. NSX ALB can be configured to validate logins against an external identity provider (e.g. LDAP/AD); when that provider is momentarily overwhelmed or unreachable, NSX ALB returns the same generic 'Invalid credentials' error it would for an actually wrong password, even though the configured credentials are correct. Retrying with a short backoff gives that kind of transient identity-provider issue a chance to clear before the job fails outright. Defaults to 0 (no retries), which preserves the original behavior unless this is explicitly configured. | String | 0 | 🔲 Unchecked |
 
    The Custom Fields tab should look like this:
 
@@ -249,6 +250,7 @@ the Keyfactor Command Portal
    | ServerUsername | The username of the user to log on as in VMware NSX ALB. |
    | ServerPassword | The password of the user to log on as in VMware NSX ALB. |
    | ApiVersion | The API Version of Avi / NSX to target. A default is set for the version this was originally developed and tested against. |
+   | RetriesForFailedAuthentication | The number of additional login attempts to make if NSX ALB rejects the configured credentials as invalid, to absorb transient failures from an external identity provider (e.g. LDAP/AD) rather than failing the job. Defaults to 0 (no retries). |
 
 </details>
 
@@ -277,6 +279,7 @@ the Keyfactor Command Portal
    | Properties.ServerUsername | The username of the user to log on as in VMware NSX ALB. |
    | Properties.ServerPassword | The password of the user to log on as in VMware NSX ALB. |
    | Properties.ApiVersion | The API Version of Avi / NSX to target. A default is set for the version this was originally developed and tested against. |
+   | Properties.RetriesForFailedAuthentication | The number of additional login attempts to make if NSX ALB rejects the configured credentials as invalid, to absorb transient failures from an external identity provider (e.g. LDAP/AD) rather than failing the job. Defaults to 0 (no retries). |
 
 3. **Import the CSV file to create the certificate stores**
 
