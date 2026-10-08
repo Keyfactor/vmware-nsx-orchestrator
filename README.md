@@ -43,9 +43,9 @@ Application and System certs are used by NSX ALB for SSL offloading and require 
 This integration is compatible with Keyfactor Universal Orchestrator version 10.1 and later.
 
 ## Support
-The VMware NSX Advanced Load Balancer (Avi) Universal Orchestrator extension If you have a support issue, please open a support ticket by either contacting your Keyfactor representative or via the Keyfactor Support Portal at https://support.keyfactor.com.
+The VMware NSX Advanced Load Balancer (Avi) Universal Orchestrator extension is supported by Keyfactor. If you require support for any issues or have feature request, please open a support ticket by either contacting your Keyfactor representative or via the Keyfactor Support Portal at https://support.keyfactor.com.
 
-> To report a problem or suggest a new feature, use the **[Issues](../../issues)** tab. If you want to contribute actual bug fixes or proposed enhancements, use the **[Pull requests](../../pulls)** tab.
+> If you want to contribute bug fixes or additional enhancements, use the **[Pull requests](../../pulls)** tab.
 
 ## Requirements & Prerequisites
 
@@ -174,21 +174,59 @@ the Keyfactor Command Portal
 
    ![VMware-NSX Custom Fields Tab](docsource/images/VMware-NSX-custom-fields-store-type-dialog.png)
 
+
+   ###### Server Username
+   The username of the user to log on as in VMware NSX ALB.
+
+
+   > [!IMPORTANT]
+   > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
+
+
+
+
+   ###### Server Password
+   The password of the user to log on as in VMware NSX ALB.
+
+
+   > [!IMPORTANT]
+   > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
+
+
+
+
+   ###### X-Avi-Version
+   The API Version of Avi / NSX to target. A default is set for the version this was originally developed and tested against.
+
+   ![VMware-NSX Custom Field - ApiVersion](docsource/images/VMware-NSX-custom-field-ApiVersion-dialog.png)
+   ![VMware-NSX Custom Field - ApiVersion](docsource/images/VMware-NSX-custom-field-ApiVersion-validation-options-dialog.png)
+
+
+
+   ###### Retries For Failed Authentication
+   The number of additional login attempts to make if NSX ALB rejects the configured credentials as invalid. NSX ALB can be configured to validate logins against an external identity provider (e.g. LDAP/AD); when that provider is momentarily overwhelmed or unreachable, NSX ALB returns the same generic 'Invalid credentials' error it would for an actually wrong password, even though the configured credentials are correct. Retrying with a short backoff gives that kind of transient identity-provider issue a chance to clear before the job fails outright. Defaults to 0 (no retries), which preserves the original behavior unless this is explicitly configured.
+
+   ![VMware-NSX Custom Field - RetriesForFailedAuthentication](docsource/images/VMware-NSX-custom-field-RetriesForFailedAuthentication-dialog.png)
+   ![VMware-NSX Custom Field - RetriesForFailedAuthentication](docsource/images/VMware-NSX-custom-field-RetriesForFailedAuthentication-validation-options-dialog.png)
+
+
+
+
+
    </details>
 
 ## Installation
 
 1. **Download the latest VMware NSX Advanced Load Balancer (Avi) Universal Orchestrator extension from GitHub.**
 
-    Navigate to the [VMware NSX Advanced Load Balancer (Avi) Universal Orchestrator extension GitHub version page](https://github.com/Keyfactor/vmware-nsx-orchestrator/releases/latest). Refer to the compatibility matrix below to determine whether the `net6.0` or `net8.0` asset should be downloaded. Then, click the corresponding asset to download the zip archive.
+    Navigate to the [VMware NSX Advanced Load Balancer (Avi) Universal Orchestrator extension GitHub version page](https://github.com/Keyfactor/vmware-nsx-orchestrator/releases/latest). Refer to the compatibility matrix below to determine the asset should be downloaded. Then, click the corresponding asset to download the zip archive.
 
    | Universal Orchestrator Version | Latest .NET version installed on the Universal Orchestrator server | `rollForward` condition in `Orchestrator.runtimeconfig.json` | `vmware-nsx-orchestrator` .NET version to download |
    | --------- | ----------- | ----------- | ----------- |
    | Older than `11.0.0` | | | `net6.0` |
    | Between `11.0.0` and `11.5.1` (inclusive) | `net6.0` | | `net6.0` |
-   | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `Disable` | `net6.0` |
-   | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `LatestMajor` | `net8.0` |
-   | `11.6` _and_ newer | `net8.0` | | `net8.0` |
+   | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `Disable` | `net6.0` || Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `LatestMajor` | `net8.0` |
+   | `11.6` _and_ newer | `net8.0` | | `net8.0` | 
 
     Unzip the archive containing extension assemblies to a known location.
 
@@ -250,7 +288,7 @@ the Keyfactor Command Portal
    | ServerUsername | The username of the user to log on as in VMware NSX ALB. |
    | ServerPassword | The password of the user to log on as in VMware NSX ALB. |
    | ApiVersion | The API Version of Avi / NSX to target. A default is set for the version this was originally developed and tested against. |
-   | RetriesForFailedAuthentication | The number of additional login attempts to make if NSX ALB rejects the configured credentials as invalid, to absorb transient failures from an external identity provider (e.g. LDAP/AD) rather than failing the job. Defaults to 0 (no retries). |
+   | RetriesForFailedAuthentication | The number of additional login attempts to make if NSX ALB rejects the configured credentials as invalid. NSX ALB can be configured to validate logins against an external identity provider (e.g. LDAP/AD); when that provider is momentarily overwhelmed or unreachable, NSX ALB returns the same generic 'Invalid credentials' error it would for an actually wrong password, even though the configured credentials are correct. Retrying with a short backoff gives that kind of transient identity-provider issue a chance to clear before the job fails outright. Defaults to 0 (no retries), which preserves the original behavior unless this is explicitly configured. |
 
 </details>
 
@@ -279,7 +317,7 @@ the Keyfactor Command Portal
    | Properties.ServerUsername | The username of the user to log on as in VMware NSX ALB. |
    | Properties.ServerPassword | The password of the user to log on as in VMware NSX ALB. |
    | Properties.ApiVersion | The API Version of Avi / NSX to target. A default is set for the version this was originally developed and tested against. |
-   | Properties.RetriesForFailedAuthentication | The number of additional login attempts to make if NSX ALB rejects the configured credentials as invalid, to absorb transient failures from an external identity provider (e.g. LDAP/AD) rather than failing the job. Defaults to 0 (no retries). |
+   | Properties.RetriesForFailedAuthentication | The number of additional login attempts to make if NSX ALB rejects the configured credentials as invalid. NSX ALB can be configured to validate logins against an external identity provider (e.g. LDAP/AD); when that provider is momentarily overwhelmed or unreachable, NSX ALB returns the same generic 'Invalid credentials' error it would for an actually wrong password, even though the configured credentials are correct. Retrying with a short backoff gives that kind of transient identity-provider issue a chance to clear before the job fails outright. Defaults to 0 (no retries), which preserves the original behavior unless this is explicitly configured. |
 
 3. **Import the CSV file to create the certificate stores**
 
