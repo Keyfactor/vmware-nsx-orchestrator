@@ -86,6 +86,15 @@ New-StoreType "VMware-NSX" @'
       "DefaultValue": "20.1.1",
       "Required": true,
       "IsPAMEligible": false
+    },
+    {
+      "Name": "RetriesForFailedAuthentication",
+      "DisplayName": "Retries For Failed Authentication",
+      "Type": "String",
+      "DependsOn": "",
+      "DefaultValue": "0",
+      "Required": false,
+      "IsPAMEligible": false
     }
   ],
   "EntryParameters": [],

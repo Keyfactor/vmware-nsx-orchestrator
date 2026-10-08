@@ -20,6 +20,7 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Tests
     internal static class ReflectionHelpers
     {
         private const BindingFlags InstanceNonPublic = BindingFlags.NonPublic | BindingFlags.Instance;
+        private const BindingFlags StaticNonPublic = BindingFlags.NonPublic | BindingFlags.Static;
 
         public static void SetField(object target, Type declaringType, string fieldName, object value)
         {
@@ -44,6 +45,18 @@ namespace Keyfactor.Extensions.Orchestrator.Vmware.Nsx.Tests
         {
             var method = declaringType.GetMethod(methodName, InstanceNonPublic)
                 ?? throw new InvalidOperationException($"Could not find method '{methodName}' on {declaringType.Name}.");
+            return InvokeAndUnwrap(method, target, args);
+        }
+
+        public static object InvokeStatic(Type declaringType, string methodName, params object[] args)
+        {
+            var method = declaringType.GetMethod(methodName, StaticNonPublic)
+                ?? throw new InvalidOperationException($"Could not find static method '{methodName}' on {declaringType.Name}.");
+            return InvokeAndUnwrap(method, null, args);
+        }
+
+        private static object InvokeAndUnwrap(MethodInfo method, object target, object[] args)
+        {
             try
             {
                 return method.Invoke(target, args);

@@ -57,6 +57,16 @@
               "Required": true,
               "IsPAMEligible": false,
               "Description": "The API Version of Avi / NSX to target. A default is set for the version this was originally developed and tested against."
+            },
+            {
+              "Name": "RetriesForFailedAuthentication",
+              "DisplayName": "Retries For Failed Authentication",
+              "Type": "String",
+              "DependsOn": "",
+              "DefaultValue": "0",
+              "Required": false,
+              "IsPAMEligible": false,
+              "Description": "The number of additional login attempts to make if NSX ALB rejects the configured credentials as invalid. NSX ALB can be configured to validate logins against an external identity provider (e.g. LDAP/AD); when that provider is momentarily overwhelmed or unreachable, NSX ALB returns the same generic 'Invalid credentials' error it would for an actually wrong password, even though the configured credentials are correct. Retrying with a short backoff gives that kind of transient identity-provider issue a chance to clear before the job fails outright. Defaults to 0 (no retries), which preserves the original behavior unless this is explicitly configured."
             }
           ],
           "EntryParameters": [],
