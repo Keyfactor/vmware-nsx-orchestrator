@@ -25,6 +25,8 @@ You will also need to add the following Custom Field if you want to be able to s
 
 ![](images/store-type-avi-version.png)
 
+You may also want to add a `RetriesForFailedAuthentication` Custom Field (String, default `0`). NSX ALB can be configured to validate logins against an external identity provider (e.g. LDAP/AD) instead of its own local user store. When that provider is momentarily overwhelmed or unreachable, NSX ALB returns the exact same generic "Invalid credentials" error it would return for an actually wrong password - there's no way to distinguish the two from the response alone. Setting `RetriesForFailedAuthentication` to a value greater than 0 tells the orchestrator to retry the login (with a short, increasing backoff capped at 5 seconds per attempt) that many additional times before giving up, so a transient identity-provider hiccup doesn't fail the job over credentials that were correct the whole time. Leave it at the default of `0` to keep the original behavior (fail immediately on the first rejection) unless you've confirmed your NSX ALB instance uses an external auth provider prone to this.
+
 **2. Create a new NSX Certificate Store**
 
 After the Certificate Store Type has been configured, a new NSX Certificate Store can be created.
@@ -35,6 +37,7 @@ When creating the store, if a tenant other than the API user's default tenant sh
 | Client Machine | [optional-tenant-name]https://my.nsx.url/ | https://my.nsx.url/ |
 | Store Path | Application | CA (or Controller) |
 | X-Avi-Version | 20.1.1 (default value) | 18.2.9 |
+| RetriesForFailedAuthentication | 0 (default value, no retries) | 3 |
 
 **3. Adding or Replacing (Renewing) Certificates**
 The required alias acts as the name for the certificate in the VMware NSX ALB system. These are also used to renew/replace and delete existing certificates.
